@@ -39,6 +39,7 @@ but if you are going with your own controls then the above step is not needed.
 
 **usePlayer** hook
 
+```javascript
 const {
     playerState: {
         isPlaying,
@@ -72,11 +73,13 @@ const {
     seekInterval = 3, // default is 3 secs
     autoPlay = false, // default is false
 })
+```
 
-You can use these functions direclty in your app to handle player and it's state.
+You can use these functions directly in your app to handle player and its state.
 
 **AudioPlayer** component
 
+```javascript
 <AudioPlayer
   containerStyle,
   iconStyle: {
@@ -126,6 +129,7 @@ You can use these functions direclty in your app to handle player and it's state
   customProgressIndicator,
   customControls
 />
+```
 
 **MiniPlayer**
-MiniPlayer also uses same props as AudioPlayer. 
+MiniPlayer also uses the same props as AudioPlayer.
