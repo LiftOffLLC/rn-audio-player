@@ -16,6 +16,7 @@ yarn add rn-audio-player
 
 For IOS you have to add these permissions in your app's Info.Plist file 
 
+```xml
 <key>NSMicrophoneUsageDescription</key>
 <string>We need access to the microphone for audio playback</string>
 <key>UIBackgroundModes</key>
@@ -26,8 +27,9 @@ For IOS you have to add these permissions in your app's Info.Plist file
     <string>remote-notification</string>
 </array>
 
-Also if you are going to use Player or Mini-Player then it depends upon **`react-native-verctor-icons`** so you have to add below permission.
+Also if you are going to use Player or Mini-Player then it depends upon **`react-native-vector-icons`** so you have to add below permission.
 
+```xml
 <key>UIAppFonts</key>
 <array>
     <string>Ionicons.ttf</string>
@@ -81,53 +83,53 @@ You can use these functions directly in your app to handle player and its state.
 
 ```javascript
 <AudioPlayer
-  containerStyle,
-  iconStyle: {
-    container,
-    icon
-  },
-  mediaStyle: {
-    container,
-    thumbnail
-  },
-  contentStyle: {
-    container,
-    content,
-    title,
-    titleText,
-    artist,
-    artistText
-  },
-  iconComponents: {
-    playIcon,
-    pauseIcon,
-    forwardIcon,
-    backwardIcon,
-    nextIcon,
-    previousIcon,
-    repeatIcon,
-    repeatOffIcon
-  },
-  onPlay,
-  onPause,
-  onSeek,
-  onNext,
-  onPrevious,
-  onSeekForward,
-  onSeekBackward,
-  onFinished,
-  sourceUrl,
-  trackInfo,
-  autoPlay,
-  filePath,
-  repeat,
-  seekInterval,
-  shouldShowControls,
-  shouldShowMedia,
-  shouldShowContent,
-  shouldShowDuration,
-  customProgressIndicator,
-  customControls
+  containerStyle={containerStyle}
+  iconStyle={{
+    container: iconContainerStyle,
+    icon: iconStyle
+  }}
+  mediaStyle={{
+    container: mediaContainerStyle,
+    thumbnail: thumbnailStyle
+  }}
+  contentStyle={{
+    container: contentContainerStyle,
+    content: contentStyle,
+    title: titleStyle,
+    titleText: titleTextStyle,
+    artist: artistStyle,
+    artistText: artistTextStyle
+  }}
+  iconComponents={{
+    playIcon: PlayIcon,
+    pauseIcon: PauseIcon,
+    forwardIcon: ForwardIcon,
+    backwardIcon: BackwardIcon,
+    nextIcon: NextIcon,
+    previousIcon: PreviousIcon,
+    repeatIcon: RepeatIcon,
+    repeatOffIcon: RepeatOffIcon
+  }}
+  onPlay={handlePlay}
+  onPause={handlePause}
+  onSeek={handleSeek}
+  onNext={handleNext}
+  onPrevious={handlePrevious}
+  onSeekForward={handleSeekForward}
+  onSeekBackward={handleSeekBackward}
+  onFinished={handleFinished}
+  sourceUrl={sourceUrl}
+  trackInfo={trackInfo}
+  autoPlay={autoPlay}
+  filePath={filePath}
+  repeat={repeat}
+  seekInterval={seekInterval}
+  shouldShowControls={shouldShowControls}
+  shouldShowMedia={shouldShowMedia}
+  shouldShowContent={shouldShowContent}
+  shouldShowDuration={shouldShowDuration}
+  customProgressIndicator={CustomProgressIndicator}
+  customControls={CustomControls}
 />
 ```
 
