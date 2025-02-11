@@ -8,11 +8,11 @@ When there are existing solutions like expo-av, react-native-music-player, etc t
 **Note**- This package is supported for Node version 18 and above.
 To install this package you can do 
 ```
-npm install rn-audio-player
+npm install @liftoffllc/rn-audio-player
 ```
 or 
 ```
-yarn add rn-audio-player
+yarn add @liftoffllc/rn-audio-player
 ```
 
 # **`Prerequisites`**
