@@ -1,0 +1,131 @@
+# **`rn-audio-player`** 
+**rn-audio-player** is a feature-rich package that allows apps to play audio from URL or file. Right now we are supporting IOS and Android. You can find the sample app using this here.
+
+# **`Why this package`**
+When there are existing solutions like expo-av, react-native-music-player, etc then what makes this package stands-out is the already integrated UI that comes in form of full-page player and a mini player, these UI components are fully-customizable and can be modified as per app's design theme. We also support background play, along with media controls and a hook that you can use directly in you app and have your own UI by extending this hook features. 😎
+
+# **`Installation`**
+**Note**- This package is supported for Node version 18 and above.
+To install this package you can do 
+
+npm install rn-audio-player
+or 
+yarn add rn-audio-player
+
+# **`Prerequisites`**
+
+For IOS you have to add these permissions in your app's Info.Plist file 
+
+<key>NSMicrophoneUsageDescription</key>
+<string>We need access to the microphone for audio playback</string>
+<key>UIBackgroundModes</key>
+<array>
+    <string>audio</string>
+    <string>processing</string>
+    <string>fetch</string>
+    <string>remote-notification</string>
+</array>
+
+Also if you are going to use Player or Mini-Player then it depends upon **`react-native-verctor-icons`** so you have to add below permission.
+
+<key>UIAppFonts</key>
+<array>
+    <string>Ionicons.ttf</string>
+</array>
+
+but if you are going with your own controls then the above step is not needed.
+
+# **`Usage`**
+
+**usePlayer** hook
+
+const {
+    playerState: {
+        isPlaying,
+        isLoading,
+        totalDuration,
+        progress,
+        elapsedTime
+    },
+    playerControls: {
+        play,
+        pause,
+        stop,
+        seek,
+        seekForward,
+        seekBackward,
+        toggleRepeat
+    },
+    loadContent
+} = usePlayer({
+    onPlay,
+    onFinished,
+    onPause,
+    repeat,
+    onStop,
+    onSeek,
+    onSeekForward,
+    onReady,
+    onSeekBackward,
+    onProgress,
+    sourceUrl,
+    seekInterval = 3, // default is 3 secs
+    autoPlay = false, // default is false
+})
+
+You can use these functions direclty in your app to handle player and it's state.
+
+**AudioPlayer** component
+
+<AudioPlayer
+  containerStyle,
+  iconStyle: {
+    container,
+    icon
+  },
+  mediaStyle: {
+    container,
+    thumbnail
+  },
+  contentStyle: {
+    container,
+    content,
+    title,
+    titleText,
+    artist,
+    artistText
+  },
+  iconComponents: {
+    playIcon,
+    pauseIcon,
+    forwardIcon,
+    backwardIcon,
+    nextIcon,
+    previousIcon,
+    repeatIcon,
+    repeatOffIcon
+  },
+  onPlay,
+  onPause,
+  onSeek,
+  onNext,
+  onPrevious,
+  onSeekForward,
+  onSeekBackward,
+  onFinished,
+  sourceUrl,
+  trackInfo,
+  autoPlay,
+  filePath,
+  repeat,
+  seekInterval,
+  shouldShowControls,
+  shouldShowMedia,
+  shouldShowContent,
+  shouldShowDuration,
+  customProgressIndicator,
+  customControls
+/>
+
+**MiniPlayer**
+MiniPlayer also uses same props as AudioPlayer. 
