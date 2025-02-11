@@ -1,5 +1,5 @@
 {
-  "name": "rn-audio-player",
+  "name": "@liftoffllc/rn-audio-player",
   "version": "0.1.0",
   "description": "audio player library for react native with rich feature controls and background audio support",
   "source": "./src/index.tsx",
