@@ -26,6 +26,7 @@ For IOS you have to add these permissions in your app's Info.Plist file
     <string>fetch</string>
     <string>remote-notification</string>
 </array>
+```
 
 Also if you are going to use Player or Mini-Player then it depends upon **`react-native-vector-icons`** so you have to add below permission.
 
@@ -34,6 +35,7 @@ Also if you are going to use Player or Mini-Player then it depends upon **`react
 <array>
     <string>Ionicons.ttf</string>
 </array>
+```
 
 but if you are going with your own controls then the above step is not needed.
 
