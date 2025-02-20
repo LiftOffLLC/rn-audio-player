@@ -22,20 +22,24 @@
 @property (nonatomic, strong) id timeObserver;
 @property (nonatomic, assign) BOOL isPlaying;
 @property (nonatomic, strong) NSURL *audioURL;
+@property (nonatomic, assign) float wasPlayingBeforeInterruption;
+@property (nonatomic, copy) NSString* currentTitle;
+@property (nonatomic, copy) NSString* currentArtist;
+@property (nonatomic, copy) NSString* currentAlbum;
+@property (nonatomic, copy) NSString* currentArtwork;
+@property (nonatomic, assign) double currentDuration;
+@property (nonatomic, strong) NSCache *artworkCache;
 
 // Internal methods (private implementation)
-- (void)setMediaPlayerInfo:(NSString *)title 
-                       artist:(NSString *)artist 
-                        album:(NSString *)album 
-                     duration:(NSString *)duration;
-- (void)loadContentImpl:(NSString *)urlString;
-- (void)playAudioImpl;
-- (void)pauseAudioImpl;
-- (void)stopAudioImpl;
-- (void)seekImpl:(double)timeInSeconds;
-- (void)setupMediaPlayerNotificationView;
 - (void)setUpSession;
 - (void)observeProgressUpdates;
+- (void)emitProgressUpdate;
+- (void)emitStateChange;
+- (void)setupRemoteCommandCenter;
+- (void)updateNowPlayingInfo;
+- (void)handleSecondaryAudio;
+- (void)handleAudioSessionInterruption;
+- (void)handleRouteChange;
 
 // Required TurboModule method
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:

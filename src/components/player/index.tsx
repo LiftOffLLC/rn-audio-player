@@ -5,74 +5,113 @@
  * @format
  */
 
-import React, { useEffect } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
-import usePlayer from '../../hooks/usePlayer';
-import { mockAudioContent, mockTrackInfo } from '../../data/mockData';
-// import AudioPlayerMedia from './audioPlayerMedia';
+import React, { useCallback, useEffect, useState } from 'react';
+import { SafeAreaView, ScrollView } from 'react-native';
 import AudioPlayerContent from './audioPlayerContent';
 import AudioPlayerDuration from './playerDuration';
 import PlayerControls from './audioPlayerControls';
-import type { IPlayerProps } from '../../types';
+import { PlayerState, type IPlayerProps } from '../../types';
+import { usePlayerContext } from '../../provider';
+import usePlayer from '../../hooks/usePlayer';
 
 function Player(props: IPlayerProps): React.JSX.Element {
   const {
-    loadContent,
-    playerState: { isPlaying, isLoading, elapsedTime, totalDuration, progress },
-    playerControls: { play, pause, seekForward, seekBackward },
-  } = usePlayer({
-    autoPlay: props.autoPlay ?? false,
-    trackInfo: props.trackInfo ?? mockTrackInfo,
-    sourceUrl: props.sourceUrl ?? '',
-  });
+    playerState: { elapsedTime, totalDuration, progress, state },
+    playerControls,
+    setCurrentTrack,
+    currentTrack,
+  } = usePlayerContext();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const { seekInterval = 3 } = props;
 
-  console.log(
-    'player state ->',
-    isPlaying,
-    isLoading,
-    elapsedTime,
-    totalDuration,
-    progress
-  );
+  usePlayer();
+  const { play, pause, loadContent } = playerControls ?? {};
 
   useEffect(() => {
-    (async () => {
-      await loadContent();
-    })();
+    if (play && pause && loadContent) {
+      setIsLoaded(true);
+    }
+  }, [play, pause, loadContent]);
+
+  useEffect(() => {
+    if (props.trackInfo) {
+      setCurrentTrack?.(props.trackInfo);
+    }
+  }, [props.trackInfo, loadContent, setCurrentTrack]);
+
+  const handleAutoPlay = useCallback(() => {
+    if (state === PlayerState.LOADED) {
+      play?.();
+    }
+  }, [play, state]);
+
+  const handleInit = useCallback(() => {
+    loadContent?.();
   }, [loadContent]);
 
+  useEffect(() => {
+    if (currentTrack) {
+      handleInit();
+    }
+  }, [currentTrack, handleInit, loadContent]);
+
+  useEffect(() => {
+    if (props.autoPlay) {
+      handleAutoPlay();
+    }
+  }, [props.autoPlay, handleAutoPlay]);
+
+  useEffect(() => {
+    if (state === PlayerState.PLAYING) {
+      setIsPlaying(true);
+    } else {
+      setIsPlaying(false);
+    }
+  }, [state]);
+
+  useEffect(() => {
+    if (state === PlayerState.LOADED) {
+      setIsLoaded(true);
+    } else {
+      setIsLoaded(false);
+    }
+  }, [state]);
+
   const onPlay = () => {
-    play();
+    play?.();
   };
 
   const onPause = () => {
-    pause();
+    pause?.();
   };
 
-  const MockContent = (
-    <View style={styles.mockContent}>
-      <Text style={styles.mockContentTitle}>{mockAudioContent.title}</Text>
-      <Text style={styles.mockContentArtist}>{mockAudioContent.artist}</Text>
-    </View>
-  );
+  const seekForward = () => {
+    // Seek forward 10 seconds
+    const seekTo = Math.min((elapsedTime ?? 0) + seekInterval, totalDuration);
+    playerControls?.seek?.(seekTo);
+  };
+
+  const seekBackward = () => {
+    // Seek backward 10 seconds
+    const seekTo = Math.max((elapsedTime ?? 0) - seekInterval, 0);
+    playerControls?.seek?.(seekTo);
+  };
 
   return (
     <SafeAreaView>
       <ScrollView>
-        {/* <AudioPlayerMedia
-          thumbnail={require('./assets/images/sample-image.jpg')}
-        /> */}
-        <AudioPlayerContent content={MockContent} />
+        <AudioPlayerContent {...props.contentStyle} />
         <AudioPlayerDuration
           totalDuration={totalDuration}
-          currentDuration={elapsedTime}
-          progress={progress}
+          currentDuration={elapsedTime ?? 0}
+          progress={progress ?? 0}
         />
         <PlayerControls
           isPlaying={isPlaying}
           onPlay={onPlay}
           onPause={onPause}
-          isLoading={isLoading}
+          isLoading={isLoaded}
           onSeekForward={seekForward}
           onSeekBackward={seekBackward}
         />
@@ -80,23 +119,5 @@ function Player(props: IPlayerProps): React.JSX.Element {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  mockContent: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    textAlign: 'center',
-  },
-  mockContentTitle: {
-    fontSize: 24,
-    marginVertical: 5,
-    fontWeight: 'bold',
-  },
-  mockContentArtist: {
-    fontSize: 18,
-    marginVertical: 5,
-  },
-});
 
 export default Player;

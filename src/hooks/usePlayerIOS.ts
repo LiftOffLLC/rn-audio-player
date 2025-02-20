@@ -1,41 +1,53 @@
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { NativeEventEmitter, NativeModules } from 'react-native';
-import type { IHookProps, IHookReturn } from '../types';
+import { PlayerState, type IHookProps } from '../types';
+import { usePlayerContext } from '../provider';
 
 const usePlayerIOS = ({
   onPlay,
-  onFinished,
   onPause,
-  repeat,
   onStop,
   onSeek,
-  onSeekForward,
   onReady,
-  onSeekBackward,
   onProgress,
-  sourceUrl,
-  seekInterval = 3,
-  autoPlay = false,
-}: IHookProps) => {
+}: IHookProps = {}) => {
   const { AudioModule } = NativeModules;
   const audioEventEmitter = useMemo(
     () => (AudioModule ? new NativeEventEmitter(AudioModule) : null),
     [AudioModule]
   );
-  const [isLoading, setIsLoading] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [totalDuration, setTotalDuration] = useState(0);
-  const [_repeat, setRepeat] = useState(repeat);
-  const [currentProgress, setCurrentProgress] = useState(0);
-  const [elapsedTime, setCurrentTime] = useState(0);
+  const { playerState, setPlayerState, setPlayerControls, currentTrack } =
+    usePlayerContext();
+  const controlsSet = useRef(false);
+
+  const getStateEnum = (state: string) => {
+    switch (state) {
+      case 'IDLE':
+        return PlayerState.IDEAL;
+      case 'LOADED':
+        return PlayerState.LOADED;
+      case 'PLAYING':
+        return PlayerState.PLAYING;
+      case 'PAUSED':
+        return PlayerState.PAUSED;
+      case 'STOPPED':
+        return PlayerState.STOPPED;
+      default:
+        return PlayerState.IDEAL;
+    }
+  };
 
   useEffect(() => {
     const progressEventHandler = audioEventEmitter?.addListener(
       'onAudioProgress',
       (event: any) => {
-        const { currentTime, progress } = event;
-        setCurrentTime(currentTime);
-        setCurrentProgress(progress * 100);
+        const { currentTime, progress, totalDuration } = event;
+        setPlayerState((prevState) => ({
+          ...prevState,
+          elapsedTime: currentTime,
+          progress: progress * 100,
+          totalDuration: totalDuration,
+        }));
         onProgress?.(progress * 100);
       }
     );
@@ -44,7 +56,10 @@ const usePlayerIOS = ({
       'onAudioStateChange',
       (event: any) => {
         const { state } = event;
-        setIsPlaying(state === 'PLAYING');
+        setPlayerState((prevState) => ({
+          ...prevState,
+          state: getStateEnum(state),
+        }));
       }
     );
 
@@ -52,130 +67,132 @@ const usePlayerIOS = ({
       progressEventHandler?.remove();
       stateEventHandler?.remove();
     };
-  }, [audioEventEmitter, onProgress]);
+  }, [audioEventEmitter, onProgress, playerState, setPlayerState]);
 
-  const toggleRepeat = () => {
-    setRepeat(!_repeat);
-  };
+  const toggleRepeat = useCallback(() => {
+    setPlayerState((prevState) => ({
+      ...prevState,
+      repeat: !playerState.repeat,
+    }));
+  }, [playerState, setPlayerState]);
 
   const getDuration = useCallback(async () => {
     try {
       const duration: number = await AudioModule.getTotalDuration();
-      setTotalDuration(duration);
+      setPlayerState((prevState) => ({
+        ...prevState,
+        totalDuration: duration,
+      }));
     } catch (error) {
       console.error('Error getting duration', error);
     }
-  }, [AudioModule]);
+  }, [AudioModule, setPlayerState]);
 
   const loadContent = useCallback(async () => {
     try {
-      await AudioModule.loadContent(sourceUrl);
-      await getDuration();
-      onReady?.();
+      if (playerState.state === PlayerState.IDEAL) {
+        const { url } = currentTrack ?? {};
+        if (!url) {
+          throw new Error('No track URL found');
+        }
+        await AudioModule.loadContent(url);
+        await getDuration();
+        onReady?.();
+      }
     } catch (error) {
       console.error('Error loading audio', error);
     }
-  }, [AudioModule, sourceUrl, getDuration, onReady]);
+  }, [playerState.state, currentTrack, AudioModule, getDuration, onReady]);
+
+  const setTrackInfo = useCallback(async () => {
+    try {
+      if (!currentTrack) {
+        throw new Error('No track info found');
+      }
+      await AudioModule.setMediaPlayerInfo(
+        currentTrack?.title,
+        currentTrack?.artist,
+        currentTrack?.album,
+        currentTrack?.artwork
+      );
+    } catch (error) {
+      console.error('Error setting track info', error);
+    }
+  }, [currentTrack, AudioModule]);
 
   const playSound = useCallback(async () => {
     try {
-      setIsLoading(true);
+      setPlayerState((prevState) => ({ ...prevState, isPlaying: true }));
       await AudioModule?.playAudio();
-      setIsPlaying(true);
       onPlay?.();
+      await setTrackInfo();
     } catch (error) {
       console.error('Error playing sound', error);
-    } finally {
-      setIsLoading(false);
+      setPlayerState((prevState) => ({ ...prevState, isPlaying: false }));
     }
-  }, [AudioModule, onPlay]);
+  }, [AudioModule, onPlay, setPlayerState, setTrackInfo]);
 
-  const pauseSound = () => {
+  const pauseSound = useCallback(() => {
     AudioModule.pauseAudio();
-    setIsPlaying(false);
+    setPlayerState((prevState) => ({ ...prevState, isPlaying: false }));
     onPause?.();
-  };
+  }, [AudioModule, onPause, setPlayerState]);
 
-  const stopSound = () => {
+  const stopSound = useCallback(() => {
     AudioModule.stopAudio();
-    setIsPlaying(false);
+    setPlayerState((prevState) => ({
+      ...prevState,
+      isPlaying: false,
+      currentTrack: null,
+    }));
     onStop?.();
-  };
+  }, [AudioModule, onStop, setPlayerState]);
 
-  const seek = async (seekTo: number) => {
-    try {
-      await AudioModule.seek(seekTo);
-      onSeek?.(seekTo);
-    } catch (error) {
-      console.error('Error seeking', error);
-    }
-  };
-
-  const _onSeekForward = async () => {
-    try {
-      const seekTo =
-        elapsedTime + seekInterval > totalDuration
-          ? totalDuration
-          : elapsedTime + seekInterval;
-      await AudioModule.seek(seekTo);
-      onSeekForward?.();
-    } catch (error) {
-      console.error('Error seeking forward', error);
-    }
-  };
-
-  const _onSeekBackward = async () => {
-    try {
-      const seekTo =
-        elapsedTime - seekInterval < 0 ? 0 : elapsedTime - seekInterval;
-      await AudioModule.seek(seekTo);
-      onSeekBackward?.();
-    } catch (error) {
-      console.error('Error seeking backward', error);
-    }
-  };
-
-  useEffect(() => {
-    if (autoPlay) {
-      async () => {
-        await loadContent();
-        playSound();
-      };
-    }
-  }, [autoPlay, loadContent, playSound]);
-
-  useEffect(() => {
-    if (currentProgress === 100) {
-      if (!_repeat) {
-        setIsPlaying(false);
-        onFinished?.();
-      } else {
-        setCurrentProgress(0);
-        setCurrentTime(0);
-        playSound();
+  const seek = useCallback(
+    async (seekTo: number) => {
+      try {
+        await AudioModule.seek(seekTo);
+        onSeek?.(seekTo);
+      } catch (error) {
+        console.error('Error seeking', error);
       }
-    }
-  }, [_repeat, currentProgress, onFinished, playSound, repeat]);
-
-  return {
-    playerState: {
-      isLoading,
-      isPlaying,
-      totalDuration,
-      progress: currentProgress,
-      elapsedTime,
     },
-    playerControls: {
+    [AudioModule, onSeek]
+  );
+
+  const setControls = useCallback(() => {
+    setPlayerControls({
       play: playSound,
       pause: pauseSound,
-      stop: stopSound,
-      seek,
-      seekForward: _onSeekForward,
-      seekBackward: _onSeekBackward,
       toggleRepeat,
-    },
+      stop: stopSound,
+      loadContent,
+      seek,
+    });
+  }, [
+    setPlayerControls,
+    playSound,
+    pauseSound,
+    toggleRepeat,
+    stopSound,
     loadContent,
-  } as IHookReturn;
+    seek,
+  ]);
+
+  // Only set controls once when the player has a track
+  useEffect(() => {
+    if (currentTrack && !controlsSet.current) {
+      setControls();
+      controlsSet.current = true;
+    }
+  }, [currentTrack, setControls]);
+
+  // Reset the controls flag if track changes
+  useEffect(() => {
+    if (currentTrack === null) {
+      controlsSet.current = false;
+    }
+  }, [currentTrack]);
 };
 
 export default usePlayerIOS;

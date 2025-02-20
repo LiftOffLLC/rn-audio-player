@@ -10,4 +10,5 @@ export const mockTrackInfo = {
   album: 'Audio Album',
   artwork:
     'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQAu2qz2_GGhotIzQJvsAY-GHK6NRmZzDDWCw&s',
+  url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
 };

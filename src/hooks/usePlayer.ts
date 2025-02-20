@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import type { IHookProps } from '../types';
 
-const usePlayer = (props: IHookProps) => {
+const usePlayer = (props?: IHookProps) => {
   if (Platform.OS === 'ios') {
     return require('./usePlayerIOS').default(props);
   } else {

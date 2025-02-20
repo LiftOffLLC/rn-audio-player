@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import IconButton, { type IconButtonPropsV2 } from '../iconButton';
 
 const SkipForwardButton = ({
@@ -7,7 +7,7 @@ const SkipForwardButton = ({
   iconButtonProps,
 }: {
   skipForwardComponent: React.ReactNode;
-  onSkipForward: () => void;
+  onSkipForward?: () => void;
   iconButtonProps?: IconButtonPropsV2;
 }) => {
   return (
@@ -31,7 +31,7 @@ const SkipBackwardButton = ({
   iconButtonProps,
 }: {
   skipBackwardComponent: React.ReactNode;
-  onPrevious: () => void;
+  onPrevious?: () => void;
   iconButtonProps?: IconButtonPropsV2;
 }) => {
   return (
@@ -55,7 +55,7 @@ const NextButton = ({
   iconButtonProps,
 }: {
   nextComponent: React.ReactNode;
-  onNext: () => void;
+  onNext?: () => void;
   iconButtonProps?: IconButtonPropsV2;
 }) => {
   return (
@@ -79,7 +79,7 @@ const PreviousButton = ({
   iconButtonProps,
 }: {
   previousComponent: React.ReactNode;
-  onPrevious: () => void;
+  onPrevious?: () => void;
   iconButtonProps?: IconButtonPropsV2;
 }) => {
   return (
@@ -145,8 +145,8 @@ const PlayerControls = ({
   onPlay: () => void;
   onPause: () => void;
   isLoading: boolean;
-  onSeekForward: () => void;
-  onSeekBackward: () => void;
+  onSeekForward?: () => void;
+  onSeekBackward?: () => void;
   skipForwardComponent?: React.ReactNode;
   skipBackwardComponent?: React.ReactNode;
   nextComponent?: React.ReactNode;
@@ -155,7 +155,7 @@ const PlayerControls = ({
   iconButtonProps?: IconButtonPropsV2;
 }) => {
   return (
-    <View>
+    <View style={styles.container}>
       <SkipBackwardButton
         skipBackwardComponent={skipBackwardComponent}
         onPrevious={onSeekBackward}
@@ -187,5 +187,13 @@ const PlayerControls = ({
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+});
 
 export default PlayerControls;

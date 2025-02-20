@@ -11,10 +11,10 @@ const IconButton = ({ key, containerStyles, ...props }: IconButtonPropsV2) => {
   return (
     <View key={key} style={{ ...styles.container, ...containerStyles }}>
       <Icon.Button
-        size={props.size ?? 30}
-        color={props?.color}
-        backgroundColor={props?.backgroundColor}
-        underlayColor={props?.underlayColor}
+        size={props.size ?? 25}
+        color={props?.color ?? '#000'}
+        backgroundColor={props?.backgroundColor ?? 'transparent'}
+        underlayColor={props?.underlayColor ?? 'transparent'}
         style={{ ...styles.iconButton, ...props.style }}
         {...props}
       />

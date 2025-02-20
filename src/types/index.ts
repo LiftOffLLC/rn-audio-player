@@ -1,4 +1,4 @@
-import type { TextStyle, ViewStyle } from 'react-native';
+import type { ViewStyle } from 'react-native';
 import React from 'react';
 
 /**
@@ -24,6 +24,11 @@ export interface ITrackInfo {
    * The artwork URL of the track. This field is optional.
    */
   artwork?: string;
+
+  /**
+   * The URL of the track. This field is required.
+   */
+  url: string;
 }
 
 /**
@@ -78,7 +83,7 @@ export interface IAudioPlayer {
   /**
    * Information about the current track. This field is optional.
    */
-  trackInfo?: ITrackInfo;
+  trackInfo: ITrackInfo;
 
   /**
    * Indicates whether the audio should play automatically. This field is optional.
@@ -131,20 +136,19 @@ export interface IAudioPlayer {
   customControls?: React.ReactNode;
 }
 
+export enum PlayerState {
+  'IDEAL',
+  'LOADED',
+  'PLAYING',
+  'PAUSED',
+  'STOPPED',
+  'SEEKING',
+}
+
 /**
  * Interface representing the state of the audio player.
  */
 export interface IAudioPlayerState {
-  /**
-   * Indicates whether the audio is playing.
-   */
-  isPlaying: boolean;
-
-  /**
-   * Indicates whether the audio is loading.
-   */
-  isLoading: boolean;
-
   /**
    * The total duration of the audio.
    */
@@ -159,6 +163,21 @@ export interface IAudioPlayerState {
    * The elapsed time of the audio. This field is optional.
    */
   elapsedTime?: number;
+
+  /**
+   * The current track information. This field is optional.
+   */
+  currentTrack: ITrackInfo | null;
+
+  /**
+   * Indicates whether the audio is in repeat mode.
+   */
+  repeat?: boolean;
+
+  /**
+   * The current state of the player.
+   */
+  state: PlayerState;
 }
 
 /**
@@ -174,6 +193,26 @@ export interface IAudioPlayerIcon {
    * Style for the icon itself. This field is optional.
    */
   icon?: ViewStyle;
+
+  /**
+   * Size of the icon. This field is optional.
+   */
+  iconSize?: number;
+
+  /**
+   * Color of the icon. This field is optional.
+   */
+  iconColor?: string;
+
+  /**
+   * Background color of the icon. This field is optional.
+   */
+  backgroundColor?: string;
+
+  /**
+   * Underlay color of the icon. This field is optional.
+   */
+  underlayColor?: string;
 }
 
 /**
@@ -194,36 +233,16 @@ export interface IAudioPlayerMedia {
 /**
  * Interface representing the style of the audio player content.
  */
-export interface IAudioPlayerContent {
+export interface AudioPlayerContentProps {
   /**
    * Style for the content container. This field is optional.
    */
   container?: ViewStyle;
 
   /**
-   * Style for the content itself. This field is optional.
+   * Custom content component. This field is optional.
    */
-  content?: ViewStyle;
-
-  /**
-   * Style for the title container. This field is optional.
-   */
-  title?: ViewStyle;
-
-  /**
-   * Style for the title text. This field is optional.
-   */
-  titleText?: TextStyle;
-
-  /**
-   * Style for the artist container. This field is optional.
-   */
-  artist?: ViewStyle;
-
-  /**
-   * Style for the artist text. This field is optional.
-   */
-  artistText?: TextStyle;
+  content: React.ReactNode;
 }
 
 /**
@@ -293,7 +312,7 @@ export interface IPlayerProps extends IAudioPlayer {
   /**
    * The style of the audio player content. This field is optional.
    */
-  contentStyle?: IAudioPlayerContent;
+  contentStyle?: AudioPlayerContentProps;
 
   /**
    * The style of the audio player icon components. This field is optional.
@@ -306,25 +325,9 @@ export interface IPlayerProps extends IAudioPlayer {
  */
 export interface IHookProps {
   /**
-   * The URL of the audio source.
-   */
-  sourceUrl?: string;
-
-  /**
-   * The file path of the audio source.
-   */
-  filePath?: string;
-
-  /**
    * Whether the audio should play automatically.
    */
   autoPlay?: boolean;
-
-  /**
-   * Information about the track.
-   */
-  trackInfo?: ITrackInfo;
-
   /**
    * Whether the track should repeat after finishing.
    */
@@ -398,52 +401,63 @@ export interface IHookProps {
   onProgress?: (progress: number) => void;
 }
 
-export interface IHookReturn {
+export interface IPlayerControls {
   /**
-   * The current state of the audio player.
+   * Play the audio.
    */
-  playerState: IAudioPlayerState;
-
-  playerControls: {
-    /**
-     * Play the audio.
-     */
-    play: () => void;
-
-    /**
-     * Pause the audio.
-     */
-    pause: () => void;
-
-    /**
-     * Stop the audio.
-     */
-    stop: () => void;
-
-    /**
-     * Seek to a specific time in the audio.
-     * @param time - The time in seconds to seek to.
-     */
-    seek: (time: number) => void;
-
-    /**
-     * Seek forward by the specified interval.
-     */
-    seekForward: () => void;
-
-    /**
-     * Seek backward by the specified interval.
-     */
-    seekBackward: () => void;
-
-    /**
-     * Toggle the repeat mode.
-     */
-    toggleRepeat: () => void;
-  };
+  play?: () => void;
 
   /**
-   * Load content from the specified URL or file path.
+   * Pause the audio.
    */
-  loadContent: () => void;
+  pause?: () => void;
+
+  /**
+   * Stop the audio.
+   */
+  stop?: () => void;
+
+  /**
+   * Seek to a specific time in the audio.
+   * @param time - The time in seconds to seek to.
+   */
+  seek?: (time: number) => void;
+
+  /**
+   * Seek forward by the specified interval.
+   */
+  seekForward?: () => void;
+
+  /**
+   * Seek backward by the specified interval.
+   */
+  seekBackward?: () => void;
+
+  /**
+   * Toggle the repeat mode.
+   */
+  toggleRepeat?: () => void;
+
+  /**
+   * Load content from the specified track.
+   */
+  loadContent?: () => Promise<void>;
+}
+
+export interface IMiniPlayerProps {
+  containerStyles?: ViewStyle;
+  iconStyle?: IAudioPlayerIcon;
+  contentStyle?: AudioPlayerContentProps;
+  iconComponents?: IAudioPlayerIconComponents;
+  autoPlay?: boolean;
+  trackInfo: ITrackInfo;
+  mediaPlayerIcon?: React.ReactNode;
+  playIcon?: (args: any) => React.ReactNode;
+  pauseIcon?: (args: any) => React.ReactNode;
+  nextIcon?: (args: any) => React.ReactNode;
+  previousIcon?: (args: any) => React.ReactNode;
+  onNext?: () => void;
+  onPrevious?: () => void;
+  onPlay?: () => void;
+  onPause?: () => void;
 }
