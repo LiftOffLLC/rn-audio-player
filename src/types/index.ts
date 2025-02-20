@@ -445,19 +445,78 @@ export interface IPlayerControls {
 }
 
 export interface IMiniPlayerProps {
+  /**
+   * The style of the audio player container. This field is optional.
+   */
   containerStyles?: ViewStyle;
+
+  /**
+   * The style of the audio player icon. This field is optional.
+   */
   iconStyle?: IAudioPlayerIcon;
+
+  /**
+   * The style of the audio player content. This field is optional.
+   */
   contentStyle?: AudioPlayerContentProps;
+
+  /**
+   * The style of the audio player icon components. This field is optional.
+   */
   iconComponents?: IAudioPlayerIconComponents;
+
+  /**
+   * Should the audio play automatically.
+   */
   autoPlay?: boolean;
+
+  /**
+   * The track information.
+   */
   trackInfo: ITrackInfo;
+
+  /**
+   * The icon for mini player
+   */
   mediaPlayerIcon?: React.ReactNode;
+
+  /**
+   * The play icon for mini player
+   */
   playIcon?: (args: any) => React.ReactNode;
+
+  /**
+   * The pause icon for mini player
+   */
   pauseIcon?: (args: any) => React.ReactNode;
+
+  /**
+   * The next icon for mini player
+   */
   nextIcon?: (args: any) => React.ReactNode;
+
+  /**
+   * The previous icon for mini player
+   */
   previousIcon?: (args: any) => React.ReactNode;
+
+  /**
+   * The onNext callback function
+   */
   onNext?: () => void;
+
+  /**
+   * The onPrevious callback function
+   */
   onPrevious?: () => void;
+
+  /**
+   * The onPlay callback function
+   */
   onPlay?: () => void;
+
+  /**
+   * The onPause callback function
+   */
   onPause?: () => void;
 }

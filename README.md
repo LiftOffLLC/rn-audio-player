@@ -2,7 +2,13 @@
 **rn-audio-player** is a feature-rich package that allows apps to play audio from URL or file. Right now we are supporting IOS and Android. You can find the sample app using this here.
 
 # **`Why this package`**
-When there are existing solutions like expo-av, react-native-music-player, etc then what makes this package stands-out is the already integrated UI that comes in form of full-page player and a mini player, these UI components are fully-customizable and can be modified as per app's design theme. We also support background play, along with media controls and a hook that you can use directly in you app and have your own UI by extending this hook features. 😎
+When there are existing solutions like expo-av, react-native-music-player, etc then what makes this package stands-out is 
+
+1. The already integrated UI that comes in form of full-page player and a mini player.
+2. These UI components are fully-customizable and can be modified as per app's design theme. 
+3. We also support background play, along with media controls
+4. A hook that you can use directly in you app and have your own UI by extending this hook features. 😎
+5. A context that you can use to manage multiple media player sessions.
 
 # **`Installation`**
 **Note**- This package is supported for Node version 18 and above.
@@ -47,6 +53,8 @@ but if you are going with your own controls then the above step is not needed.
 **usePlayer** hook
 
 ```javascript
+import { usePlayer } from '@liftoffllc/rn-audio-player';
+
 const {
     playerState: {
         isPlaying,
@@ -84,9 +92,25 @@ const {
 
 You can use these functions directly in your app to handle player and its state.
 
+**Note** To use our UI components you have to wrap your application in wrapper which is used to manage multiple instances of audio player.
+
+```javascript
+import { PlayerProvider } from '@liftoffllc/rn-audio-player';
+
+export default function App() {
+  return (
+    <PlayerProvider>
+      <MyApp />
+    </PlayerProvider>
+  );
+}
+```
+
 **AudioPlayer** component
 
 ```javascript
+import { AudioPlayer } from '@liftoffllc/rn-audio-player';
+
 <AudioPlayer
   containerStyle={containerStyle}
   iconStyle={{
@@ -138,5 +162,35 @@ You can use these functions directly in your app to handle player and its state.
 />
 ```
 
-**MiniPlayer**
-MiniPlayer also uses the same props as AudioPlayer.
+**MiniPlayer** component
+
+```javascript
+import { AudioPlayer } from '@liftoffllc/rn-audio-player';
+
+<MiniPlayer
+  containerStyles={containerStyles}
+  iconStyle={iconStyle}
+  iconComponents={
+    playIcon={playIcon}
+    pauseIcon={pauseIcon}
+    forwardIcon={forwardIcon}
+    backwardIcon={backwardIcon}
+    nextIcon={nextIcon}
+    previousIcon={previousIcon}
+    repeatIcon={repeatIcon}
+    repeatOffIcon={repeatOffIcon}
+  }
+  autoPlay={autoPlay}
+  repeat={repeat}
+  trackInfo={trackInfo}
+  mediaPlayerIcon={mediaPlayerIcon}
+  playIcon={(...args) => React.ReactNode}
+  pauseIcon={(...args) =>  React.ReactNode}
+  nextIcon={(...args) =>  React.ReactNode}
+  previousIcon={(...args) =>  React.ReactNode}
+  onNext={onNext}
+  onPreivous={onPrevious}
+  onPlay={onPlay}
+  onPause={onPause}
+>
+```
