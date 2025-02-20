@@ -1,5 +1,5 @@
 # **`rn-audio-player`** 
-**rn-audio-player** is a feature-rich package that allows apps to play audio from URL or file. Right now we are supporting IOS and Android. You can find the sample app using this here.
+**rn-audio-player** is a feature-rich package that allows apps to play audio from URL or file. Right now we are supporting IOS and Android. You can find the sample app using this [here](https://github.com/LiftOffLLC/rn-audio-player/tree/main/example)
 
 # **`Why this package`**
 When there are existing solutions like expo-av, react-native-music-player, etc then what makes this package stands-out is 
