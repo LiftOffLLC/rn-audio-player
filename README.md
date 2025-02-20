@@ -165,7 +165,7 @@ import { AudioPlayer } from '@liftoffllc/rn-audio-player';
 **MiniPlayer** component
 
 ```javascript
-import { AudioPlayer } from '@liftoffllc/rn-audio-player';
+import { MiniPlayer } from '@liftoffllc/rn-audio-player';
 
 <MiniPlayer
   containerStyles={containerStyles}

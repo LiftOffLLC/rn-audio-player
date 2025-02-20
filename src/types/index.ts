@@ -481,22 +481,27 @@ export interface IMiniPlayerProps {
   mediaPlayerIcon?: React.ReactNode;
 
   /**
-   * The play icon for mini player
+   * For these icon functions, the argument is an object with a single key, onPress, which is a function.
+   * If you wish to use your own icon buttons, you can pass them as props to the mini player.
+   */
+
+  /**
+   * The play icon function for mini player
    */
   playIcon?: (args: any) => React.ReactNode;
 
   /**
-   * The pause icon for mini player
+   * The pause icon function for mini player
    */
   pauseIcon?: (args: any) => React.ReactNode;
 
   /**
-   * The next icon for mini player
+   * The next icon function for mini player
    */
   nextIcon?: (args: any) => React.ReactNode;
 
   /**
-   * The previous icon for mini player
+   * The previous icon function for mini player
    */
   previousIcon?: (args: any) => React.ReactNode;
 
