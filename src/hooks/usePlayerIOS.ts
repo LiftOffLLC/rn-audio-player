@@ -21,6 +21,7 @@ const usePlayerIOS = ({
   const controlsSet = useRef(false);
 
   const getStateEnum = (state: string) => {
+    // TODO - May be add "COMPLETED" state to let the user know that song is completed
     switch (state) {
       case 'IDLE':
         return PlayerState.IDEAL;
@@ -42,6 +43,7 @@ const usePlayerIOS = ({
       'onAudioProgress',
       (event: any) => {
         const { currentTime, progress, totalDuration } = event;
+        // TODO - move "progress * 100" to a variable and then use it
         setPlayerState((prevState) => ({
           ...prevState,
           elapsedTime: currentTime,
@@ -140,6 +142,7 @@ const usePlayerIOS = ({
 
   const stopSound = useCallback(() => {
     AudioModule.stopAudio();
+    // TODO - May be change the function name to "resetPlayerState" or something like that
     setPlayerState((prevState) => ({
       ...prevState,
       isPlaying: false,
@@ -189,6 +192,7 @@ const usePlayerIOS = ({
 
   // Reset the controls flag if track changes
   useEffect(() => {
+    // TODO - Reset the controls since the track has changed
     if (currentTrack === null) {
       controlsSet.current = false;
     }

@@ -1,6 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import IconButton, { type IconButtonPropsV2 } from '../iconButton';
 
+// TODO - remove inline types and move it for better readability
 const SkipForwardButton = ({
   skipForwardComponent,
   onSkipForward,
@@ -112,6 +113,7 @@ const PlayPauseButton = ({
   onPause: () => void;
   iconButtonProps?: IconButtonPropsV2;
 }) => {
+  // TODO - Remove the inline condition and move it to a variable
   return (
     <View>
       {playPauseComponent ? (

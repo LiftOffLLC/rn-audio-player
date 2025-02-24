@@ -67,6 +67,7 @@ const AudioPlayerMedia = ({
         ...styles.container,
       }}
     >
+      {/* TODO - looks like below can be combined into one function, if thumbnail ? getThumbnail() : getIconThumbnail() check this again */}
       {getThumbnail()}
       {getIconThumbnail()}
     </View>
