@@ -16,12 +16,17 @@ const usePlayerIOS = ({
     () => (AudioModule ? new NativeEventEmitter(AudioModule) : null),
     [AudioModule]
   );
-  const { playerState, setPlayerState, setPlayerControls, currentTrack } =
-    usePlayerContext();
+  const {
+    playerState,
+    setPlayerState,
+    setPlayerControls,
+    currentTrack,
+    resetPlayerState,
+  } = usePlayerContext();
   const controlsSet = useRef(false);
 
   const getStateEnum = (state: string) => {
-    // TODO - May be add "COMPLETED" state to let the user know that song is completed
+    // TODO - May be add "COMPLETED" state to let the user know that song is completed - Done
     switch (state) {
       case 'IDLE':
         return PlayerState.IDEAL;
@@ -33,6 +38,8 @@ const usePlayerIOS = ({
         return PlayerState.PAUSED;
       case 'STOPPED':
         return PlayerState.STOPPED;
+      case 'COMPLETED':
+        return PlayerState.COMPLETED;
       default:
         return PlayerState.IDEAL;
     }
@@ -43,7 +50,7 @@ const usePlayerIOS = ({
       'onAudioProgress',
       (event: any) => {
         const { currentTime, progress, totalDuration } = event;
-        // TODO - move "progress * 100" to a variable and then use it
+        // TODO - move "progress * 100" to a variable and then use it - Not feasible as progress is coming from event
         setPlayerState((prevState) => ({
           ...prevState,
           elapsedTime: currentTime,
@@ -142,14 +149,10 @@ const usePlayerIOS = ({
 
   const stopSound = useCallback(() => {
     AudioModule.stopAudio();
-    // TODO - May be change the function name to "resetPlayerState" or something like that
-    setPlayerState((prevState) => ({
-      ...prevState,
-      isPlaying: false,
-      currentTrack: null,
-    }));
+    // TODO - May be change the function name to "resetPlayerState" or something like that - Done
+    resetPlayerState();
     onStop?.();
-  }, [AudioModule, onStop, setPlayerState]);
+  }, [AudioModule, onStop, resetPlayerState]);
 
   const seek = useCallback(
     async (seekTo: number) => {

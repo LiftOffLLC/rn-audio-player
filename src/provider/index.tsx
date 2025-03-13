@@ -16,6 +16,7 @@ export interface PlayerContextProps {
   >;
   currentTrack: ITrackInfo | null;
   setCurrentTrack: React.Dispatch<React.SetStateAction<ITrackInfo | null>>;
+  resetPlayerState: () => void;
 }
 
 const PlayerContext = createContext<PlayerContextProps | undefined>(undefined);
@@ -43,6 +44,16 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
         setPlayerControls,
         currentTrack,
         setCurrentTrack,
+        resetPlayerState: () =>
+          setPlayerState((prevState) => ({
+            ...prevState,
+            currentTrack: null,
+            totalDuration: 0,
+            elapsedTime: 0,
+            progress: 0,
+            repeat: false,
+            state: PlayerState.IDEAL,
+          })),
       }}
     >
       {children}

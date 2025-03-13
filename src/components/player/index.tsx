@@ -5,7 +5,7 @@
  * @format
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { SafeAreaView, ScrollView } from 'react-native';
 import AudioPlayerContent from './audioPlayerContent';
 import AudioPlayerDuration from './playerDuration';
@@ -25,6 +25,15 @@ function Player(props: IPlayerProps): React.JSX.Element {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const { seekInterval = 3 } = props;
+  const loaded = useMemo(() => state === PlayerState.LOADED, [state]);
+  const seekForwardTime = useMemo(
+    () => (elapsedTime ?? 0) + seekInterval,
+    [elapsedTime, seekInterval]
+  );
+  const seekBackwardTime = useMemo(
+    () => (elapsedTime ?? 0) - seekInterval,
+    [elapsedTime, seekInterval]
+  );
 
   usePlayer();
   const { play, pause, loadContent } = playerControls ?? {};
@@ -42,10 +51,10 @@ function Player(props: IPlayerProps): React.JSX.Element {
   }, [props.trackInfo, loadContent, setCurrentTrack]);
 
   const handleAutoPlay = useCallback(() => {
-    if (state === PlayerState.LOADED) {
+    if (loaded) {
       play?.();
     }
-  }, [play, state]);
+  }, [loaded, play]);
 
   const handleInit = useCallback(() => {
     loadContent?.();
@@ -78,13 +87,13 @@ function Player(props: IPlayerProps): React.JSX.Element {
   }, [state]);
 
   useEffect(() => {
-    // TODO - Assign "state === PlayerState.LOADED" to a variable and then use it in setting the state
-    if (state === PlayerState.LOADED) {
+    // TODO - Assign "loaded" to a variable and then use it in setting the state - Done
+    if (loaded) {
       setIsLoaded(true);
     } else {
       setIsLoaded(false);
     }
-  }, [state]);
+  }, [loaded]);
 
   const onPlay = () => {
     play?.();
@@ -95,16 +104,16 @@ function Player(props: IPlayerProps): React.JSX.Element {
   };
 
   const seekForward = () => {
-    // TODO - Assign "(elapsedTime ?? 0) + seekInterval" to a variable and then use it
+    // TODO - Assign "(elapsedTime ?? 0) + seekInterval" to a variable and then use it - Done
     // Seek forward 10 seconds
-    const seekTo = Math.min((elapsedTime ?? 0) + seekInterval, totalDuration);
+    const seekTo = Math.min(seekForwardTime, totalDuration);
     playerControls?.seek?.(seekTo);
   };
 
   const seekBackward = () => {
-    // TODO - Assign "(elapsedTime ?? 0) - seekInterval" to a variable and then use it
+    // TODO - Assign "(elapsedTime ?? 0) - seekInterval" to a variable and then use it - Done
     // Seek backward 10 seconds
-    const seekTo = Math.max((elapsedTime ?? 0) - seekInterval, 0);
+    const seekTo = Math.max(seekBackwardTime, 0);
     playerControls?.seek?.(seekTo);
   };
 
