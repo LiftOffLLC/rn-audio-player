@@ -147,45 +147,42 @@ RCT_EXPORT_MODULE(AudioModule);
 }
 
 - (void)updateNowPlayingInfoWithArtworkURL:(NSString *)imageUrl {
-    NSURL *url = [NSURL URLWithString:imageUrl];
-    if (!url) return;
+  NSURL *url = [NSURL URLWithString:imageUrl];
+  if (!url)
+    return;
 
-    // Check cache first
-    UIImage *cachedImage = [self.artworkCache objectForKey:imageUrl];
-    if (cachedImage) {
-        return;
-    }
+  // Check cache first
+  UIImage *cachedImage = [self.artworkCache objectForKey:imageUrl];
+  if (cachedImage) {
+    return;
+  }
 
-    // Download image asynchronously if not cached
-    NSURLSessionDataTask *downloadTask = [[NSURLSession sharedSession] dataTaskWithURL:url completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+  // Download image asynchronously if not cached
+  NSURLSessionDataTask *downloadTask = [[NSURLSession sharedSession]
+        dataTaskWithURL:url
+      completionHandler:^(NSData *_Nullable data,
+                          NSURLResponse *_Nullable response,
+                          NSError *_Nullable error) {
         if (error) {
-            NSLog(@"Failed to load artwork: %@", error.localizedDescription);
-            return;
+          NSLog(@"Failed to load artwork: %@", error.localizedDescription);
+          return;
         }
 
         if (data) {
-            UIImage *artworkImage = [UIImage imageWithData:data];
-            if (artworkImage) {
-                // Store image in cache
-                [self.artworkCache setObject:artworkImage forKey:imageUrl];
-            }
+          UIImage *artworkImage = [UIImage imageWithData:data];
+          if (artworkImage) {
+            // Store image in cache
+            [self.artworkCache setObject:artworkImage forKey:imageUrl];
+          }
         }
-    }];
-    
-    [downloadTask resume];
+      }];
+
+  [downloadTask resume];
 }
 
 - (void)updateNowPlayingInfo {
   if (!self.audioPlayer)
     return;
-
-  if ([MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo) {
-    NSLog(@"Now Playing Info: %@",
-          [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo);
-  } else {
-    NSLog(@"Now Playing Info is nil");
-  }
-
   NSMutableDictionary *nowPlayingInfo = [NSMutableDictionary dictionary];
 
   nowPlayingInfo[MPMediaItemPropertyTitle] =
@@ -202,16 +199,18 @@ RCT_EXPORT_MODULE(AudioModule);
 
   NSURL *url = [NSURL URLWithString:self.currentArtwork];
 
-    if (url) {
-        // if url is present download the image
-        [self updateNowPlayingInfoWithArtworkURL:self.currentArtwork];
-        UIImage *artworkImage = [self.artworkCache objectForKey:self.currentArtwork];
-        if (artworkImage) {
-            MPMediaItemArtwork *artwork = [[MPMediaItemArtwork alloc] initWithImage:artworkImage];
-            nowPlayingInfo[MPMediaItemPropertyArtwork] = artwork;
-        }
+  if (url) {
+    // if url is present download the image
+    [self updateNowPlayingInfoWithArtworkURL:self.currentArtwork];
+    UIImage *artworkImage =
+        [self.artworkCache objectForKey:self.currentArtwork];
+    if (artworkImage) {
+      MPMediaItemArtwork *artwork =
+          [[MPMediaItemArtwork alloc] initWithImage:artworkImage];
+      nowPlayingInfo[MPMediaItemPropertyArtwork] = artwork;
     }
-  
+  }
+
   nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = @(currentTime);
   nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = @(duration);
   nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = @1.0;
@@ -250,15 +249,37 @@ RCT_EXPORT_MODULE(AudioModule);
 }
 
 - (void)stopAudio {
-  if (self.audioPlayer) {
+    if (!self.audioPlayer) return;
+    
+    // First pause playback
     [self.audioPlayer pause];
-    self.audioPlayer = nil;
-    [self.playerItem removeObserver:self forKeyPath:@"status"];
-    self.playerItem = nil;
+    [self.audioPlayer seekToTime:CMTimeMake(0, 1)]; // Seek to start
     self.isPlaying = NO;
-    [self updateNowPlayingInfo];
+    
+    // Emit state change before cleanup
     [self emitStateChange:@"STOPPED" message:@""];
-  }
+    
+    // Remove time observer
+    if (self.timeObserver) {
+        [self.audioPlayer removeTimeObserver:self.timeObserver];
+        self.timeObserver = nil;
+    }
+    
+    // Remove status observer
+    @try {
+        if (self.playerItem) {
+            [self.playerItem removeObserver:self forKeyPath:@"status"];
+        }
+    } @catch (NSException *exception) {
+        os_log(OS_LOG_DEFAULT, "Error removing observer: %{public}@", exception.reason);
+    }
+    
+    // Clear player items
+    self.playerItem = nil;
+    self.audioPlayer = nil;
+    
+    // Update UI elements
+    [self updateNowPlayingInfo];
 }
 
 - (void)seek:(double)timeInSeconds {
@@ -372,11 +393,17 @@ RCT_EXPORT_MODULE(AudioModule);
     return;
   }
 
-  if (progress == 1) {
+  NSLog(@"Progress: %f, Current Time: %f, Total Duration: %f", progress,
+        currentTime, totalDuration);
+
+  // Use a small epsilon for floating point comparison
+  const double epsilon = 0.001;
+  if (fabs(progress - 1.0) < epsilon) {
     [self.audioPlayer pause];
     self.isPlaying = NO;
     [self emitStateChange:@"COMPLETED" message:@""];
   }
+
   NSDictionary *event = @{
     @"progress" : @(progress),
     @"currentTime" : @(currentTime),

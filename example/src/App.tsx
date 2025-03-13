@@ -1,14 +1,14 @@
 /* eslint-disable react-native/no-inline-styles */
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import {
   AudioPlayer,
   MiniPlayer,
   PlayerProvider,
   usePlayerContext,
+  PlayerState,
 } from '@liftoffllc/rn-audio-player';
 import { mockAudioContent } from '../data/mockData.native';
 import Icon from 'react-native-vector-icons/FontAwesome6';
-import { PlayerState } from '../../src/types';
 
 const sourceURL =
   'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
@@ -58,6 +58,21 @@ const CustomPlayer = (
   );
 };
 
+const MediaContent = (artwork: string) => {
+  return (
+    <View
+      style={{
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+      <Text style={{ margin: 10 }}>Custom Media Content</Text>
+      <Image source={{ uri: artwork }} style={{ width: 150, height: 150 }} />
+    </View>
+  );
+};
+
 export default function App() {
   return (
     <PlayerProvider>
@@ -83,6 +98,11 @@ function PlayerContent() {
     </View>
   );
 
+  const handlePlay = () => {
+    playerControls?.loadContent?.();
+    playerControls?.play?.();
+  };
+
   return (
     <>
       <View>
@@ -90,6 +110,9 @@ function PlayerContent() {
           trackInfo={trackInfo}
           autoPlay={true}
           contentStyle={{ content: MockContent1 }}
+          mediaStyle={{
+            customMediaContent: MediaContent(trackInfo.artwork),
+          }}
         />
         <MiniPlayer
           trackInfo={trackInfo}
@@ -111,11 +134,7 @@ function PlayerContent() {
         />
       </View>
       <View>
-        {CustomPlayer(
-          playerState.state,
-          playerControls?.play!,
-          playerControls?.pause!
-        )}
+        {CustomPlayer(playerState.state, handlePlay, playerControls?.stop!)}
       </View>
     </>
   );

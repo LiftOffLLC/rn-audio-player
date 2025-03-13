@@ -137,12 +137,12 @@ export interface IAudioPlayer {
 }
 
 export enum PlayerState {
-  'IDEAL',
-  'LOADED',
-  'PLAYING',
-  'PAUSED',
-  'STOPPED',
-  'SEEKING',
+  IDEAL = 'IDEAL',
+  LOADED = 'LOADED',
+  PLAYING = 'PLAYING',
+  PAUSED = 'PAUSED',
+  STOPPED = 'STOPPED',
+  COMPLETED = 'COMPLETED',
 }
 
 /**
@@ -222,12 +222,17 @@ export interface IAudioPlayerMedia {
   /**
    * Style for the media container. This field is optional.
    */
-  container?: ViewStyle;
+  containerStyles?: ViewStyle;
 
   /**
    * Style for the media thumbnail. This field is optional.
    */
-  thumbnail?: ViewStyle;
+  thumbnailContainerStyles?: ViewStyle;
+
+  /**
+   * Media Content. This field is optional.
+   */
+  customMediaContent?: React.ReactNode;
 }
 
 /**

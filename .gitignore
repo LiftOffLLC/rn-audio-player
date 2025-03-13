@@ -5,6 +5,9 @@
 # XDE
 .expo/
 
+package-lock.json
+yarn.lock
+
 # VSCode
 .vscode/
 jsconfig.json

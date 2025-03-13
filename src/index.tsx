@@ -5,9 +5,16 @@ import {
   PlayerProvider as PlayerProviderComponent,
   usePlayerContext as _usePlayerContext,
 } from './provider';
+import type { ITrackInfo, IPlayerControls } from './types';
+import { PlayerState } from './types';
 
-export const usePlayerHook = usePlayer;
-export const AudioPlayer = Player;
-export const MiniPlayer = MiniPlayerComponent;
-export const PlayerProvider = PlayerProviderComponent;
-export const usePlayerContext = _usePlayerContext;
+export {
+  PlayerState,
+  usePlayer as usePlayerHook,
+  Player as AudioPlayer,
+  MiniPlayerComponent as MiniPlayer,
+  PlayerProviderComponent as PlayerProvider,
+  _usePlayerContext as usePlayerContext,
+};
+
+export type { ITrackInfo, IPlayerControls };

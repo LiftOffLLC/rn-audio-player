@@ -13,6 +13,7 @@ import PlayerControls from './audioPlayerControls';
 import { PlayerState, type IPlayerProps } from '../../types';
 import { usePlayerContext } from '../../provider';
 import usePlayer from '../../hooks/usePlayer';
+import AudioPlayerMedia from './audioPlayerMedia';
 
 function Player(props: IPlayerProps): React.JSX.Element {
   const {
@@ -63,7 +64,12 @@ function Player(props: IPlayerProps): React.JSX.Element {
   }, [props.autoPlay, handleAutoPlay]);
 
   useEffect(() => {
-    // TODO - Assign "state === PlayerState.PLAYING" to a variable and then use it in setting the state
+    if (props.repeat && state === PlayerState.COMPLETED) {
+      handleAutoPlay();
+    }
+  }, [props.repeat, playerControls, handleAutoPlay, state]);
+
+  useEffect(() => {
     if (state === PlayerState.PLAYING) {
       setIsPlaying(true);
     } else {
@@ -105,6 +111,7 @@ function Player(props: IPlayerProps): React.JSX.Element {
   return (
     <SafeAreaView>
       <ScrollView>
+        <AudioPlayerMedia {...props.mediaStyle} />
         <AudioPlayerContent {...props.contentStyle} />
         <AudioPlayerDuration
           totalDuration={totalDuration}
