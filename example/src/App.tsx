@@ -105,7 +105,7 @@ function PlayerContent() {
 
   return (
     <>
-      <View>
+      <View style={styles.mainContainer}>
         <AudioPlayer
           trackInfo={trackInfo}
           autoPlay={true}
@@ -121,6 +121,7 @@ function PlayerContent() {
             iconSize: 30,
             iconColor: 'yellow',
           }}
+          containerStyles={{ marginTop: 10 }}
         />
         <MiniPlayer
           trackInfo={trackInfo}
@@ -130,17 +131,20 @@ function PlayerContent() {
           pauseIcon={CustomPauseIcon}
           nextIcon={CustomNextIcon}
           previousIcon={CustomPreviousIcon}
-          containerStyles={{ backgroundColor: 'whitesmoke', margin: 10 }}
+          containerStyles={{ backgroundColor: 'whitesmoke', marginTop: 10 }}
         />
       </View>
-      <View>
-        {CustomPlayer(playerState.state, handlePlay, playerControls?.stop!)}
+      <View style={styles.mainContainer}>
+        {CustomPlayer(playerState.state, handlePlay, playerControls?.pause!)}
       </View>
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    padding: 10,
+  },
   mockContent: {
     flexDirection: 'column',
     justifyContent: 'center',

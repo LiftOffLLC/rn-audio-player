@@ -79,20 +79,12 @@ function Player(props: IPlayerProps): React.JSX.Element {
   }, [props.repeat, playerControls, handleAutoPlay, state]);
 
   useEffect(() => {
-    if (state === PlayerState.PLAYING) {
-      setIsPlaying(true);
-    } else {
-      setIsPlaying(false);
-    }
+    setIsPlaying(state === PlayerState.PLAYING);
   }, [state]);
 
   useEffect(() => {
     // TODO - Assign "loaded" to a variable and then use it in setting the state - Done
-    if (loaded) {
-      setIsLoaded(true);
-    } else {
-      setIsLoaded(false);
-    }
+    setIsLoaded(loaded);
   }, [loaded]);
 
   const onPlay = () => {

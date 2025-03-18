@@ -16,8 +16,13 @@ const usePlayerAndorid = ({
     () => (AudioModule ? DeviceEventEmitter : null),
     [AudioModule]
   );
-  const { playerState, setPlayerState, setPlayerControls, currentTrack } =
-    usePlayerContext();
+  const {
+    playerState,
+    setPlayerState,
+    setPlayerControls,
+    currentTrack,
+    resetPlayerState,
+  } = usePlayerContext();
   const controlsSet = useRef(false);
 
   const getStateEnum = (state: string) => {
@@ -44,13 +49,14 @@ const usePlayerAndorid = ({
       'onAudioProgress',
       (event: any) => {
         const { currentTime, progress, totalDuration } = event;
+        const progressPercentage = progress * 100;
         setPlayerState((prevState) => ({
           ...prevState,
           elapsedTime: currentTime,
-          progress: progress * 100,
+          progress: progressPercentage,
           totalDuration: totalDuration,
         }));
-        onProgress?.(progress * 100);
+        onProgress?.(progressPercentage);
       }
     );
 
@@ -145,15 +151,11 @@ const usePlayerAndorid = ({
     onPause?.();
   }, [AudioModule, onPause, setPlayerState]);
 
-  const stopSound = useCallback(() => {
+  const resetPlayer = useCallback(() => {
     AudioModule.stopAudio();
-    setPlayerState((prevState) => ({
-      ...prevState,
-      isPlaying: false,
-      currentTrack: null,
-    }));
+    resetPlayerState();
     onStop?.();
-  }, [AudioModule, onStop, setPlayerState]);
+  }, [AudioModule, onStop, resetPlayerState]);
 
   const seek = useCallback(
     async (seekTo: number) => {
@@ -172,7 +174,7 @@ const usePlayerAndorid = ({
       play: playSound,
       pause: pauseSound,
       toggleRepeat,
-      stop: stopSound,
+      stop: resetPlayer,
       loadContent,
       seek,
     });
@@ -181,7 +183,7 @@ const usePlayerAndorid = ({
     playSound,
     pauseSound,
     toggleRepeat,
-    stopSound,
+    resetPlayer,
     loadContent,
     seek,
   ]);
@@ -198,8 +200,9 @@ const usePlayerAndorid = ({
   useEffect(() => {
     if (currentTrack === null) {
       controlsSet.current = false;
+      resetPlayer();
     }
-  }, [currentTrack]);
+  }, [currentTrack, resetPlayer]);
 };
 
 export default usePlayerAndorid;

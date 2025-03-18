@@ -26,7 +26,6 @@ const usePlayerIOS = ({
   const controlsSet = useRef(false);
 
   const getStateEnum = (state: string) => {
-    // TODO - May be add "COMPLETED" state to let the user know that song is completed - Done
     switch (state) {
       case 'IDLE':
         return PlayerState.IDEAL;
@@ -50,14 +49,14 @@ const usePlayerIOS = ({
       'onAudioProgress',
       (event: any) => {
         const { currentTime, progress, totalDuration } = event;
-        // TODO - move "progress * 100" to a variable and then use it - Not feasible as progress is coming from event
+        const progressPercentage = progress * 100;
         setPlayerState((prevState) => ({
           ...prevState,
           elapsedTime: currentTime,
-          progress: progress * 100,
+          progress: progressPercentage,
           totalDuration: totalDuration,
         }));
-        onProgress?.(progress * 100);
+        onProgress?.(progressPercentage);
       }
     );
 
@@ -147,9 +146,8 @@ const usePlayerIOS = ({
     onPause?.();
   }, [AudioModule, onPause, setPlayerState]);
 
-  const stopSound = useCallback(() => {
+  const resetPlayer = useCallback(() => {
     AudioModule.stopAudio();
-    // TODO - May be change the function name to "resetPlayerState" or something like that - Done
     resetPlayerState();
     onStop?.();
   }, [AudioModule, onStop, resetPlayerState]);
@@ -171,7 +169,7 @@ const usePlayerIOS = ({
       play: playSound,
       pause: pauseSound,
       toggleRepeat,
-      stop: stopSound,
+      stop: resetPlayer,
       loadContent,
       seek,
     });
@@ -180,7 +178,7 @@ const usePlayerIOS = ({
     playSound,
     pauseSound,
     toggleRepeat,
-    stopSound,
+    resetPlayer,
     loadContent,
     seek,
   ]);
@@ -195,11 +193,11 @@ const usePlayerIOS = ({
 
   // Reset the controls flag if track changes
   useEffect(() => {
-    // TODO - Reset the controls since the track has changed
     if (currentTrack === null) {
       controlsSet.current = false;
+      resetPlayer();
     }
-  }, [currentTrack]);
+  }, [currentTrack, resetPlayer]);
 };
 
 export default usePlayerIOS;
