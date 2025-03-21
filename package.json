@@ -37,7 +37,7 @@
     "!**/.*"
   ],
   "scripts": {
-    "example": "yarn workspace @shreyanshsingh/react-native-audio-player",
+    "example": "yarn workspace @liftoffllc/rn-audio-player",
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
@@ -53,14 +53,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shreyansh-liftoff/react-native-music-player.git"
+    "url": "git@github.com:LiftOffLLC/rn-audio-player.git"
   },
-  "author": "Shreyansh Singh <shreyanshsinghjee@gmail.com> (https://github.com/shreyanshsing)",
+  "author": "LiftoffLLC <noreply@liftoffllc.com> (https://github.com/LiftOffLLC)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/shreyansh-liftoff/react-native-music-player/issues"
+    "url": "https://github.com/LiftOffLLC/rn-audio-player/issues"
   },
-  "homepage": "https://github.com/shreyansh-liftoff/react-native-music-player#readme",
+  "homepage": "https://github.com/LiftOffLLC/rn-audio-player/?tab=readme-ov-file#rn-audio-player",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"

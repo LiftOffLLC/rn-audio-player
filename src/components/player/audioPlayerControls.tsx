@@ -1,16 +1,19 @@
 import { View, StyleSheet } from 'react-native';
-import IconButton, { type IconButtonPropsV2 } from '../iconButton';
+import IconButton from '../iconButton';
+import type {
+  NextButtonProps,
+  PlayerControlsProps,
+  PlayPauseButtonProps,
+  PreviousButtonProps,
+  SkipBackwardButtonProps,
+  SkipForwardButtonProps,
+} from '../../types/audio-player-controls';
 
-// TODO - remove inline types and move it for better readability - Done
 const SkipForwardButton = ({
   skipForwardComponent,
   onSkipForward,
   iconButtonProps,
-}: {
-  skipForwardComponent: React.ReactNode;
-  onSkipForward?: () => void;
-  iconButtonProps?: IconButtonPropsV2;
-}) => {
+}: SkipForwardButtonProps) => {
   return (
     <View>
       {skipForwardComponent ? (
@@ -30,11 +33,7 @@ const SkipBackwardButton = ({
   skipBackwardComponent,
   onPrevious,
   iconButtonProps,
-}: {
-  skipBackwardComponent: React.ReactNode;
-  onPrevious?: () => void;
-  iconButtonProps?: IconButtonPropsV2;
-}) => {
+}: SkipBackwardButtonProps) => {
   return (
     <View>
       {skipBackwardComponent ? (
@@ -54,11 +53,7 @@ const NextButton = ({
   nextComponent,
   onNext,
   iconButtonProps,
-}: {
-  nextComponent: React.ReactNode;
-  onNext?: () => void;
-  iconButtonProps?: IconButtonPropsV2;
-}) => {
+}: NextButtonProps) => {
   return (
     <View>
       {nextComponent ? (
@@ -78,11 +73,7 @@ const PreviousButton = ({
   previousComponent,
   onPrevious,
   iconButtonProps,
-}: {
-  previousComponent: React.ReactNode;
-  onPrevious?: () => void;
-  iconButtonProps?: IconButtonPropsV2;
-}) => {
+}: PreviousButtonProps) => {
   return (
     <View>
       {previousComponent ? (
@@ -105,25 +96,17 @@ const PlayPauseButton = ({
   onPlay,
   onPause,
   iconButtonProps,
-}: {
-  playPauseComponent: React.ReactNode;
-  isPlaying: boolean;
-  isLoading: boolean;
-  onPlay: () => void;
-  onPause: () => void;
-  iconButtonProps?: IconButtonPropsV2;
-}) => {
-  // TODO - Remove the inline condition and move it to a variable - Done
+}: PlayPauseButtonProps) => {
+  const isPlayingAndNotLoading = isPlaying && !isLoading;
+  const iconName = isPlayingAndNotLoading ? 'pause' : 'play';
+  const iconAction = isPlayingAndNotLoading ? onPause : onPlay;
+
   return (
     <View>
       {playPauseComponent ? (
         playPauseComponent
       ) : (
-        <IconButton
-          {...iconButtonProps}
-          name={isPlaying && !isLoading ? 'pause' : 'play'}
-          onPress={isPlaying && !isLoading ? onPause : onPlay}
-        />
+        <IconButton {...iconButtonProps} name={iconName} onPress={iconAction} />
       )}
     </View>
   );
@@ -142,20 +125,7 @@ const PlayerControls = ({
   previousComponent,
   playPauseComponent,
   iconButtonProps,
-}: {
-  isPlaying: boolean;
-  onPlay: () => void;
-  onPause: () => void;
-  isLoading: boolean;
-  onSeekForward?: () => void;
-  onSeekBackward?: () => void;
-  skipForwardComponent?: React.ReactNode;
-  skipBackwardComponent?: React.ReactNode;
-  nextComponent?: React.ReactNode;
-  previousComponent?: React.ReactNode;
-  playPauseComponent?: React.ReactNode;
-  iconButtonProps?: IconButtonPropsV2;
-}) => {
+}: PlayerControlsProps) => {
   return (
     <View style={styles.container}>
       <SkipBackwardButton

@@ -83,7 +83,6 @@ function Player(props: IPlayerProps): React.JSX.Element {
   }, [state]);
 
   useEffect(() => {
-    // TODO - Assign "loaded" to a variable and then use it in setting the state - Done
     setIsLoaded(loaded);
   }, [loaded]);
 
@@ -96,14 +95,12 @@ function Player(props: IPlayerProps): React.JSX.Element {
   };
 
   const seekForward = () => {
-    // TODO - Assign "(elapsedTime ?? 0) + seekInterval" to a variable and then use it - Done
     // Seek forward 10 seconds
     const seekTo = Math.min(seekForwardTime, totalDuration);
     playerControls?.seek?.(seekTo);
   };
 
   const seekBackward = () => {
-    // TODO - Assign "(elapsedTime ?? 0) - seekInterval" to a variable and then use it - Done
     // Seek backward 10 seconds
     const seekTo = Math.max(seekBackwardTime, 0);
     playerControls?.seek?.(seekTo);

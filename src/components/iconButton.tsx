@@ -1,11 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import type { IconButtonProps } from 'react-native-vector-icons/Icon';
-
-export interface IconButtonPropsV2 extends IconButtonProps {
-  key?: string;
-  containerStyles?: any;
-}
+import type { IconButtonPropsV2 } from '../types/icon-button';
 
 const IconButton = ({ key, containerStyles, ...props }: IconButtonPropsV2) => {
   return (
