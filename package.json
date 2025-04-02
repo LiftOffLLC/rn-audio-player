@@ -53,14 +53,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LiftOffLLC/rn-audio-player.git"
+    "url": "git@github.com:LiftOffLLC/rn-audio-player.git"
   },
-  "author": "Liftoff LLC <liftoffllc@gmail.com> (https://github.com/liftoffllc)",
+  "author": "LiftoffLLC <noreply@liftoffllc.com> (https://github.com/LiftOffLLC)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/LiftOffLLC/rn-audio-player/issues"
   },
-  "homepage": "https://github.com/LiftOffLLC/rn-audio-player#readme",
+  "homepage": "https://github.com/LiftOffLLC/rn-audio-player/?tab=readme-ov-file#rn-audio-player",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
