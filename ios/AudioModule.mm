@@ -222,11 +222,77 @@ RCT_EXPORT_MODULE(AudioModule);
 }
 
 - (void)loadContent:(NSString *)urlString {
+  // Check if URL is the same as current
+  if (self.audioURL &&
+      [self.audioURL.absoluteString isEqualToString:urlString]) {
+    // Just seek to start and reset state
+    [self.audioPlayer seekToTime:CMTimeMake(0, 1)];
+    self.isPlaying = NO;
+    self.currentDuration = 0;
+    [self emitStateChange:@"LOADED" message:@"Content reloaded"];
+    return;
+  }
+  // First cleanup existing player and state
+  [self cleanupCurrentPlayback];
+
+  // Initialize new player
   self.audioURL = [NSURL URLWithString:urlString];
   self.playerItem = [AVPlayerItem playerItemWithURL:self.audioURL];
   self.audioPlayer = [AVPlayer playerWithPlayerItem:self.playerItem];
 
+  // Add new observers
+  [self setupPlayerObservers];
+
+  // Reset state
+  self.isPlaying = NO;
+  self.currentDuration = 0;
+
+  // Emit state change
   [self emitStateChange:@"LOADED" message:@"Content loaded successfully"];
+}
+
+- (void)cleanupCurrentPlayback {
+  // Remove time observer
+  if (self.timeObserver) {
+    [self.audioPlayer removeTimeObserver:self.timeObserver];
+    self.timeObserver = nil;
+  }
+
+  // Remove status observer
+  @try {
+    if (self.playerItem) {
+      [self.playerItem removeObserver:self forKeyPath:@"status"];
+    }
+  } @catch (NSException *exception) {
+    os_log(OS_LOG_DEFAULT, "Error removing observer: %{public}@",
+           exception.reason);
+  }
+
+  // Pause and clear player
+  [self.audioPlayer pause];
+  self.audioPlayer = nil;
+  self.playerItem = nil;
+
+  // Reset playback state
+  self.isPlaying = NO;
+
+  // Update UI
+  [self updateNowPlayingInfo];
+}
+
+- (void)setupPlayerObservers {
+  // Add status observer
+  [self.playerItem addObserver:self
+                    forKeyPath:@"status"
+                       options:NSKeyValueObservingOptionNew
+                       context:nil];
+
+  // Add notification observers for item completion
+  [[NSNotificationCenter defaultCenter]
+      addObserver:self
+         selector:@selector(playerItemDidReachEnd:)
+             name:AVPlayerItemDidPlayToEndTimeNotification
+           object:self.playerItem];
 }
 
 - (void)playAudio {
@@ -249,37 +315,39 @@ RCT_EXPORT_MODULE(AudioModule);
 }
 
 - (void)stopAudio {
-    if (!self.audioPlayer) return;
-    
-    // First pause playback
-    [self.audioPlayer pause];
-    [self.audioPlayer seekToTime:CMTimeMake(0, 1)]; // Seek to start
-    self.isPlaying = NO;
-    
-    // Emit state change before cleanup
-    [self emitStateChange:@"STOPPED" message:@""];
-    
-    // Remove time observer
-    if (self.timeObserver) {
-        [self.audioPlayer removeTimeObserver:self.timeObserver];
-        self.timeObserver = nil;
+  if (!self.audioPlayer)
+    return;
+
+  // First pause playback
+  [self.audioPlayer pause];
+  [self.audioPlayer seekToTime:CMTimeMake(0, 1)]; // Seek to start
+  self.isPlaying = NO;
+
+  // Emit state change before cleanup
+  [self emitStateChange:@"STOPPED" message:@""];
+
+  // Remove time observer
+  if (self.timeObserver) {
+    [self.audioPlayer removeTimeObserver:self.timeObserver];
+    self.timeObserver = nil;
+  }
+
+  // Remove status observer
+  @try {
+    if (self.playerItem) {
+      [self.playerItem removeObserver:self forKeyPath:@"status"];
     }
-    
-    // Remove status observer
-    @try {
-        if (self.playerItem) {
-            [self.playerItem removeObserver:self forKeyPath:@"status"];
-        }
-    } @catch (NSException *exception) {
-        os_log(OS_LOG_DEFAULT, "Error removing observer: %{public}@", exception.reason);
-    }
-    
-    // Clear player items
-    self.playerItem = nil;
-    self.audioPlayer = nil;
-    
-    // Update UI elements
-    [self updateNowPlayingInfo];
+  } @catch (NSException *exception) {
+    os_log(OS_LOG_DEFAULT, "Error removing observer: %{public}@",
+           exception.reason);
+  }
+
+  // Clear player items
+  self.playerItem = nil;
+  self.audioPlayer = nil;
+
+  // Update UI elements
+  [self updateNowPlayingInfo];
 }
 
 - (void)seek:(double)timeInSeconds {
@@ -351,6 +419,40 @@ RCT_EXPORT_MODULE(AudioModule);
   }
   self.audioPlayer = nil;
   self.playerItem = nil;
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary<NSKeyValueChangeKey, id> *)change
+                       context:(void *)context {
+  if ([keyPath isEqualToString:@"status"]) {
+    if (object == self.playerItem) {
+      AVPlayerItemStatus status = self.playerItem.status;
+      switch (status) {
+      case AVPlayerItemStatusReadyToPlay:
+        NSLog(@"Player item is ready to play.");
+        [self emitStateChange:@"READY" message:@"Player is ready to play"];
+        break;
+      case AVPlayerItemStatusFailed:
+        NSLog(@"Player item failed: %@",
+              self.playerItem.error.localizedDescription);
+        [self emitStateChange:@"ERROR"
+                      message:self.playerItem.error.localizedDescription
+                                  ?: @"Unknown error"];
+        break;
+      case AVPlayerItemStatusUnknown:
+      default:
+        NSLog(@"Player item status is unknown.");
+        [self emitStateChange:@"ERROR" message:@"Player item status unknown"];
+        break;
+      }
+    }
+  } else {
+    [super observeValueForKeyPath:keyPath
+                         ofObject:object
+                           change:change
+                          context:context];
+  }
 }
 
 - (void)emitStateChange:(NSString *)state message:(NSString *_Nullable)message {

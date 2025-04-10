@@ -6,6 +6,7 @@ import {
   PlayerProvider,
   usePlayerContext,
   PlayerState,
+  usePlayerHook,
 } from '@liftoffllc/rn-audio-player';
 import { mockAudioContent } from '../data/mockData.native';
 import Icon from 'react-native-vector-icons/FontAwesome6';
@@ -82,7 +83,8 @@ export default function App() {
 }
 
 function PlayerContent() {
-  const { playerControls, playerState } = usePlayerContext();
+  const { playerState } = usePlayerContext();
+  const { play, pause, loadContent } = usePlayerHook();
 
   const MockContent1 = (
     <View style={styles.mockContent}>
@@ -99,8 +101,8 @@ function PlayerContent() {
   );
 
   const handlePlay = () => {
-    playerControls?.loadContent?.();
-    playerControls?.play?.();
+    loadContent?.();
+    play?.();
   };
 
   return (
@@ -135,7 +137,7 @@ function PlayerContent() {
         />
       </View>
       <View style={styles.mainContainer}>
-        {CustomPlayer(playerState.state, handlePlay, playerControls?.pause!)}
+        {CustomPlayer(playerState.state, handlePlay, pause!)}
       </View>
     </>
   );

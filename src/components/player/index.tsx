@@ -18,7 +18,6 @@ import AudioPlayerMedia from './audioPlayerMedia';
 function Player(props: IPlayerProps): React.JSX.Element {
   const {
     playerState: { elapsedTime, totalDuration, progress, state },
-    playerControls,
     setCurrentTrack,
     currentTrack,
   } = usePlayerContext();
@@ -35,14 +34,8 @@ function Player(props: IPlayerProps): React.JSX.Element {
     [elapsedTime, seekInterval]
   );
 
-  usePlayer();
-  const { play, pause, loadContent } = playerControls ?? {};
-
-  useEffect(() => {
-    if (play && pause && loadContent) {
-      setIsLoaded(true);
-    }
-  }, [play, pause, loadContent]);
+  const player = usePlayer()!;
+  const { play, pause, loadContent, seek } = player;
 
   useEffect(() => {
     if (props.trackInfo) {
@@ -56,8 +49,8 @@ function Player(props: IPlayerProps): React.JSX.Element {
     }
   }, [loaded, play]);
 
-  const handleInit = useCallback(() => {
-    loadContent?.();
+  const handleInit = useCallback(async () => {
+    await loadContent?.();
   }, [loadContent]);
 
   useEffect(() => {
@@ -76,7 +69,7 @@ function Player(props: IPlayerProps): React.JSX.Element {
     if (props.repeat && state === PlayerState.COMPLETED) {
       handleAutoPlay();
     }
-  }, [props.repeat, playerControls, handleAutoPlay, state]);
+  }, [props.repeat, handleAutoPlay, state]);
 
   useEffect(() => {
     setIsPlaying(state === PlayerState.PLAYING);
@@ -97,13 +90,13 @@ function Player(props: IPlayerProps): React.JSX.Element {
   const seekForward = () => {
     // Seek forward 10 seconds
     const seekTo = Math.min(seekForwardTime, totalDuration);
-    playerControls?.seek?.(seekTo);
+    seek?.(seekTo);
   };
 
   const seekBackward = () => {
     // Seek backward 10 seconds
     const seekTo = Math.max(seekBackwardTime, 0);
-    playerControls?.seek?.(seekTo);
+    seek?.(seekTo);
   };
 
   return (

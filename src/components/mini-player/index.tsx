@@ -10,14 +10,13 @@ import { useCallback, useEffect, useState } from 'react';
 const MiniPlayer = (props: IMiniPlayerProps) => {
   const {
     playerState: { state },
-    playerControls,
     setCurrentTrack,
     currentTrack,
   } = usePlayerContext();
   const [isPlaying, setIsPlaying] = useState(false);
 
-  usePlayer();
-  const { play, pause, loadContent } = playerControls ?? {};
+  const player = usePlayer()!;
+  const { play, pause, loadContent } = player;
 
   useEffect(() => {
     if (props.trackInfo) {

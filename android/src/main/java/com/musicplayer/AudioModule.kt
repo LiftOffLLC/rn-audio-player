@@ -17,7 +17,7 @@ import com.google.android.exoplayer2.ui.PlayerNotificationManager
 
 @ReactModule(name = AudioModule.NAME)
 class AudioModule(private val reactContext: ReactApplicationContext) :
-    NativeAudioModuleSpec(reactContext) {
+        NativeAudioModuleSpec(reactContext) {
 
     private var exoPlayer: ExoPlayer? = null
     private var progressHandler: Handler? = Handler(Looper.getMainLooper())
@@ -31,65 +31,84 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
 
     init {
         reactContext.runOnUiQueueThread {
-            initializePlayer()
             initializeProgressRunnable()
             createNotificationChannel()
         }
     }
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            "Audio Player",
-            NotificationManager.IMPORTANCE_LOW
-        )
-        val notificationManager = reactContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val channel =
+                NotificationChannel(CHANNEL_ID, "Audio Player", NotificationManager.IMPORTANCE_LOW)
+        val notificationManager =
+                reactContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
     }
 
-    private fun initializePlayer() {
+    private fun ensurePlayerReady() {
         if (exoPlayer == null) {
-            exoPlayer = ExoPlayer.Builder(reactContext).build().apply {
-                addListener(object : Player.Listener {
-                    override fun onPlaybackStateChanged(state: Int) {
-                        when (state) {
-                            Player.STATE_BUFFERING -> emitAudioStateChange("BUFFERING")
-                            Player.STATE_READY -> emitAudioStateChange("LOADED")
-                            Player.STATE_ENDED -> emitAudioStateChange("COMPLETED")
-                        }
-                    }
+            exoPlayer =
+                    ExoPlayer.Builder(reactContext).build().apply {
+                        addListener(
+                                object : Player.Listener {
+                                    override fun onPlaybackStateChanged(state: Int) {
+                                        when (state) {
+                                            Player.STATE_BUFFERING ->
+                                                    emitAudioStateChange("BUFFERING")
+                                            Player.STATE_READY -> emitAudioStateChange("LOADED")
+                                            Player.STATE_ENDED -> emitAudioStateChange("COMPLETED")
+                                        }
+                                    }
 
-                    override fun onPlayerError(error: PlaybackException) {
-                        Log.e(TAG, "ExoPlayer Error: ${error.message}")
-                        emitAudioStateChange("ERROR", error.message)
+                                    override fun onPlayerError(error: PlaybackException) {
+                                        Log.e(TAG, "ExoPlayer Error: ${error.message}")
+                                        emitAudioStateChange("ERROR", error.message)
+                                    }
+                                }
+                        )
                     }
-                })
-            }
         }
     }
 
-    @ReactMethod
-    override fun addListener(eventName: String) {
-        // Required for RN event emitter
-    }
+    @ReactMethod override fun addListener(eventName: String) {}
+
+    @ReactMethod override fun removeListeners(count: Double) {}
 
     @ReactMethod
-    override fun removeListeners(count: Double) {
-        // Required for RN event emitter
-    }
+    override fun setMediaPlayerInfo(
+            title: String?,
+            artist: String?,
+            album: String?,
+            artwork: String?,
+            promise: Promise
+    ) {
+        reactContext.runOnUiQueueThread {
+            try {
+                if (exoPlayer == null) {
+                    ensurePlayerReady()
+                }
 
-    @ReactMethod
-    override fun setMediaPlayerInfo(title: String?, artist: String?, album: String?, artwork: String?, promise: Promise) {
-        try {
-            currentTitle = title ?: "Unknown"
-            currentArtist = artist ?: "Unknown"
-            currentAlbum = album ?: "Unknown"
-            currentArtwork = artwork ?: ""
-            
-            updateNotification()
-            promise.resolve(null)
-        } catch (e: Exception) {
-            promise.reject("ERROR", "Error setting media player info: ${e.message}")
+                currentTitle = title ?: "Unknown"
+                currentArtist = artist ?: "Unknown"
+                currentAlbum = album ?: "Unknown"
+                currentArtwork = artwork ?: ""
+
+                // Update media session metadata
+                try {
+                    updateNotification()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error updating notification: ${e.message}")
+                    // Don't fail the whole operation if notification update fails
+                }
+
+                promise.resolve(null)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error setting media info: ${e.message}", e)
+                promise.reject(
+                        "ERROR",
+                        "Error setting media player info: ${e.message ?: "Unknown error"}",
+                        e
+                )
+            }
         }
     }
 
@@ -98,7 +117,7 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
         reactContext.runOnUiQueueThread {
             try {
                 if (url.isBlank()) throw IllegalArgumentException("URL cannot be empty")
-                initializePlayer()
+                ensurePlayerReady()
                 val mediaItem = MediaItem.fromUri(Uri.parse(url))
                 exoPlayer?.setMediaItem(mediaItem)
                 exoPlayer?.prepare()
@@ -112,6 +131,7 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     override fun playAudio() {
         reactContext.runOnUiQueueThread {
+            ensurePlayerReady()
             exoPlayer?.playWhenReady = true
             emitAudioStateChange("PLAYING")
             progressRunnable?.let { progressHandler?.post(it) }
@@ -153,33 +173,41 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
     }
 
     private fun emitAudioStateChange(state: String, message: String? = null) {
-        val params = Arguments.createMap().apply {
-            putString("state", state)
-            message?.let { putString("message", it) }
-        }
-        reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-            ?.emit("onAudioStateChange", params)
+        val params =
+                Arguments.createMap().apply {
+                    putString("state", state)
+                    message?.let { putString("message", it) }
+                }
+        reactContext
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+                ?.emit("onAudioStateChange", params)
     }
 
     private fun initializeProgressRunnable() {
-        progressRunnable = object : Runnable {
-            override fun run() {
-                if (exoPlayer?.isPlaying == true) {
-                    val currentPosition = exoPlayer?.currentPosition?.toDouble() ?: 0.0
-                    val duration = exoPlayer?.duration?.toDouble() ?: 1.0
+        progressRunnable =
+                object : Runnable {
+                    override fun run() {
+                        if (exoPlayer?.isPlaying == true) {
+                            val currentPosition = exoPlayer?.currentPosition?.toDouble() ?: 0.0
+                            val duration = exoPlayer?.duration?.toDouble() ?: 1.0
 
-                    val params = Arguments.createMap().apply {
-                        putDouble("progress", currentPosition / duration)
-                        putDouble("currentTime", currentPosition / 1000)
-                        putDouble("totalDuration", duration / 1000)
+                            val params =
+                                    Arguments.createMap().apply {
+                                        putDouble("progress", currentPosition / duration)
+                                        putDouble("currentTime", currentPosition / 1000)
+                                        putDouble("totalDuration", duration / 1000)
+                                    }
+
+                            reactContext
+                                    .getJSModule(
+                                            DeviceEventManagerModule.RCTDeviceEventEmitter::class
+                                                    .java
+                                    )
+                                    ?.emit("onAudioProgress", params)
+                            progressHandler?.postDelayed(this, 1000)
+                        }
                     }
-
-                    reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-                        ?.emit("onAudioProgress", params)
-                    progressHandler?.postDelayed(this, 1000)
                 }
-            }
-        }
     }
 
     override fun onCatalystInstanceDestroy() {
@@ -193,17 +221,32 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
 
     private fun updateNotification() {
         if (playerNotificationManager == null) {
-            playerNotificationManager = PlayerNotificationManager.Builder(reactContext, NOTIFICATION_ID, CHANNEL_ID)
-                .setMediaDescriptionAdapter(object : PlayerNotificationManager.MediaDescriptionAdapter {
-                    override fun getCurrentContentTitle(player: Player) = currentTitle
-                    override fun createCurrentContentIntent(player: Player): PendingIntent? = null
-                    override fun getCurrentContentText(player: Player) = currentArtist
-                    override fun getCurrentSubText(player: Player) = currentAlbum
-                    override fun getCurrentLargeIcon(player: Player, callback: PlayerNotificationManager.BitmapCallback): Bitmap? = null
-                })
-                .build()
+            playerNotificationManager =
+                    PlayerNotificationManager.Builder(reactContext, NOTIFICATION_ID, CHANNEL_ID)
+                            .setMediaDescriptionAdapter(
+                                    object : PlayerNotificationManager.MediaDescriptionAdapter {
+                                        override fun getCurrentContentTitle(player: Player) =
+                                                currentTitle
+                                        override fun createCurrentContentIntent(
+                                                player: Player
+                                        ): PendingIntent? = null
+                                        override fun getCurrentContentText(player: Player) =
+                                                currentArtist
+                                        override fun getCurrentSubText(player: Player) =
+                                                currentAlbum
+                                        override fun getCurrentLargeIcon(
+                                                player: Player,
+                                                callback: PlayerNotificationManager.BitmapCallback
+                                        ): Bitmap? = null
+                                    }
+                            )
+                            .build()
+                            .apply {
+                                setPlayer(exoPlayer)
+                            }
+        } else {
+            playerNotificationManager?.setPlayer(exoPlayer)
         }
-        playerNotificationManager?.setPlayer(exoPlayer)
     }
 
     companion object {

@@ -3,6 +3,8 @@ import { NativeEventEmitter, NativeModules } from 'react-native';
 import { PlayerState, type IHookProps } from '../types';
 import { usePlayerContext } from '../provider';
 
+const { AudioModule } = NativeModules;
+
 const usePlayerIOS = ({
   onPlay,
   onPause,
@@ -11,21 +13,12 @@ const usePlayerIOS = ({
   onReady,
   onProgress,
 }: IHookProps = {}) => {
-  const { AudioModule } = NativeModules;
-  const audioEventEmitter = useMemo(
-    () => (AudioModule ? new NativeEventEmitter(AudioModule) : null),
-    [AudioModule]
-  );
-  const {
-    playerState,
-    setPlayerState,
-    setPlayerControls,
-    currentTrack,
-    resetPlayerState,
-  } = usePlayerContext();
-  const controlsSet = useRef(false);
+  const audioEventEmitter = useRef<NativeEventEmitter | null>(null);
+  const listenersSetupRef = useRef(false);
+  const { setPlayerState, currentTrack, resetPlayerState } = usePlayerContext();
 
-  const getStateEnum = (state: string) => {
+  // Memoize getStateEnum
+  const getStateEnum = useCallback((state: string) => {
     switch (state) {
       case 'IDLE':
         return PlayerState.IDEAL;
@@ -42,47 +35,95 @@ const usePlayerIOS = ({
       default:
         return PlayerState.IDEAL;
     }
-  };
+  }, []);
 
   useEffect(() => {
-    const progressEventHandler = audioEventEmitter?.addListener(
+    if (!AudioModule) return;
+
+    // Initialize the NativeEventEmitter if not already done
+    if (!audioEventEmitter.current) {
+      audioEventEmitter.current = new NativeEventEmitter(AudioModule);
+    }
+
+    // Avoid double-listener setup
+    if (listenersSetupRef.current) return;
+    listenersSetupRef.current = true;
+
+    console.log('Setting up event listeners');
+
+    const emitter = audioEventEmitter.current;
+
+    const progressEventHandler = emitter.addListener(
       'onAudioProgress',
       (event: any) => {
         const { currentTime, progress, totalDuration } = event;
         const progressPercentage = progress * 100;
-        setPlayerState((prevState) => ({
-          ...prevState,
-          elapsedTime: currentTime,
-          progress: progressPercentage,
-          totalDuration: totalDuration,
-        }));
+
+        setPlayerState((prevState) => {
+          // Prevent redundant re-renders
+          if (
+            prevState.elapsedTime === currentTime &&
+            prevState.progress === progressPercentage &&
+            prevState.totalDuration === totalDuration
+          ) {
+            return prevState;
+          }
+
+          return {
+            ...prevState,
+            elapsedTime: currentTime,
+            progress: progressPercentage,
+            totalDuration,
+          };
+        });
+
         onProgress?.(progressPercentage);
       }
     );
 
-    const stateEventHandler = audioEventEmitter?.addListener(
+    const stateEventHandler = emitter.addListener(
       'onAudioStateChange',
       (event: any) => {
         const { state } = event;
-        setPlayerState((prevState) => ({
-          ...prevState,
-          state: getStateEnum(state),
-        }));
+        const newState = getStateEnum(state);
+
+        setPlayerState((prevState) => {
+          if (prevState.state === newState) return prevState;
+
+          if (newState === PlayerState.LOADED) {
+            return {
+              ...prevState,
+              state: newState,
+              isPlaying: false,
+              progress: 0,
+              elapsedTime: 0,
+              totalDuration: 0,
+            };
+          }
+
+          return {
+            ...prevState,
+            state: newState,
+            isPlaying: newState === PlayerState.PLAYING,
+          };
+        });
       }
     );
 
+    // Cleanup
     return () => {
-      progressEventHandler?.remove();
-      stateEventHandler?.remove();
+      listenersSetupRef.current = false;
+      progressEventHandler.remove();
+      stateEventHandler.remove();
     };
-  }, [audioEventEmitter, onProgress, playerState, setPlayerState]);
+  }, [getStateEnum, onProgress, setPlayerState]);
 
   const toggleRepeat = useCallback(() => {
     setPlayerState((prevState) => ({
       ...prevState,
-      repeat: !playerState.repeat,
+      repeat: !prevState.repeat,
     }));
-  }, [playerState, setPlayerState]);
+  }, [setPlayerState]);
 
   const getDuration = useCallback(async () => {
     try {
@@ -91,26 +132,28 @@ const usePlayerIOS = ({
         ...prevState,
         totalDuration: duration,
       }));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting duration', error);
+      throw new Error('Error getting duration');
     }
-  }, [AudioModule, setPlayerState]);
+  }, [setPlayerState]);
 
   const loadContent = useCallback(async () => {
     try {
-      if (playerState.state === PlayerState.IDEAL) {
-        const { url } = currentTrack ?? {};
-        if (!url) {
-          throw new Error('No track URL found');
-        }
-        await AudioModule.loadContent(url);
-        await getDuration();
-        onReady?.();
+      const { url } = currentTrack ?? {};
+      if (!url) {
+        throw new Error('No track URL found');
       }
-    } catch (error) {
+
+      await AudioModule.loadContent(url);
+      await getDuration();
+      onReady?.();
+      console.log('Audio loaded successfully');
+    } catch (error: any) {
       console.error('Error loading audio', error);
+      throw new Error('Error loading audio');
     }
-  }, [playerState.state, currentTrack, AudioModule, getDuration, onReady]);
+  }, [currentTrack, getDuration, onReady]);
 
   const setTrackInfo = useCallback(async () => {
     try {
@@ -123,10 +166,11 @@ const usePlayerIOS = ({
         currentTrack?.album,
         currentTrack?.artwork
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error setting track info', error);
+      throw new Error('Error setting track info');
     }
-  }, [currentTrack, AudioModule]);
+  }, [currentTrack]);
 
   const playSound = useCallback(async () => {
     try {
@@ -134,70 +178,49 @@ const usePlayerIOS = ({
       await AudioModule?.playAudio();
       onPlay?.();
       await setTrackInfo();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error playing sound', error);
       setPlayerState((prevState) => ({ ...prevState, isPlaying: false }));
+      throw new Error('Error playing sound');
     }
-  }, [AudioModule, onPlay, setPlayerState, setTrackInfo]);
+  }, [setPlayerState, onPlay, setTrackInfo]);
 
   const pauseSound = useCallback(() => {
     AudioModule.pauseAudio();
     setPlayerState((prevState) => ({ ...prevState, isPlaying: false }));
     onPause?.();
-  }, [AudioModule, onPause, setPlayerState]);
+  }, [setPlayerState, onPause]);
 
   const resetPlayer = useCallback(() => {
     AudioModule.stopAudio();
     resetPlayerState();
     onStop?.();
-  }, [AudioModule, onStop, resetPlayerState]);
+  }, [resetPlayerState, onStop]);
 
   const seek = useCallback(
     async (seekTo: number) => {
       try {
         await AudioModule.seek(seekTo);
         onSeek?.(seekTo);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error seeking', error);
+        throw new Error('Error seeking');
       }
     },
-    [AudioModule, onSeek]
+    [onSeek]
   );
 
-  const setControls = useCallback(() => {
-    setPlayerControls({
+  return useMemo(
+    () => ({
       play: playSound,
       pause: pauseSound,
-      toggleRepeat,
       stop: resetPlayer,
-      loadContent,
       seek,
-    });
-  }, [
-    setPlayerControls,
-    playSound,
-    pauseSound,
-    toggleRepeat,
-    resetPlayer,
-    loadContent,
-    seek,
-  ]);
-
-  // Only set controls once when the player has a track
-  useEffect(() => {
-    if (currentTrack && !controlsSet.current) {
-      setControls();
-      controlsSet.current = true;
-    }
-  }, [currentTrack, setControls]);
-
-  // Reset the controls flag if track changes
-  useEffect(() => {
-    if (currentTrack === null) {
-      controlsSet.current = false;
-      resetPlayer();
-    }
-  }, [currentTrack, resetPlayer]);
+      loadContent,
+      toggleRepeat,
+    }),
+    [playSound, pauseSound, resetPlayer, seek, loadContent, toggleRepeat]
+  );
 };
 
 export default usePlayerIOS;

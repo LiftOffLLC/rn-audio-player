@@ -1,19 +1,10 @@
-import { useContext } from 'react';
+import { useCallback, useContext, useMemo } from 'react';
 import { createContext, useState } from 'react';
-import {
-  PlayerState,
-  type IAudioPlayerState,
-  type IPlayerControls,
-  type ITrackInfo,
-} from '../types';
+import { PlayerState, type IAudioPlayerState, type ITrackInfo } from '../types';
 
 export interface PlayerContextProps {
   playerState: IAudioPlayerState;
-  playerControls: IPlayerControls | null;
   setPlayerState: React.Dispatch<React.SetStateAction<IAudioPlayerState>>;
-  setPlayerControls: React.Dispatch<
-    React.SetStateAction<IPlayerControls | null>
-  >;
   currentTrack: ITrackInfo | null;
   setCurrentTrack: React.Dispatch<React.SetStateAction<ITrackInfo | null>>;
   resetPlayerState: () => void;
@@ -30,34 +21,37 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
     repeat: false,
     state: PlayerState.IDEAL,
   });
-  const [playerControls, setPlayerControls] = useState<IPlayerControls | null>(
-    null
-  );
   const [currentTrack, setCurrentTrack] = useState<ITrackInfo | null>(null);
 
+  const resetPlayerState = useCallback(() => {
+    setPlayerState({
+      currentTrack: null,
+      totalDuration: 0,
+      elapsedTime: 0,
+      progress: 0,
+      repeat: false,
+      state: PlayerState.IDEAL,
+    });
+  }, []);
+
+  const value = useMemo(() => {
+    return {
+      playerState,
+      setPlayerState,
+      currentTrack,
+      setCurrentTrack,
+      resetPlayerState,
+    };
+  }, [
+    playerState,
+    setPlayerState,
+    currentTrack,
+    setCurrentTrack,
+    resetPlayerState,
+  ]);
+
   return (
-    <PlayerContext.Provider
-      value={{
-        playerState,
-        setPlayerState,
-        playerControls,
-        setPlayerControls,
-        currentTrack,
-        setCurrentTrack,
-        resetPlayerState: () =>
-          setPlayerState((prevState) => ({
-            ...prevState,
-            currentTrack: null,
-            totalDuration: 0,
-            elapsedTime: 0,
-            progress: 0,
-            repeat: false,
-            state: PlayerState.IDEAL,
-          })),
-      }}
-    >
-      {children}
-    </PlayerContext.Provider>
+    <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>
   );
 };
 
