@@ -7,7 +7,7 @@ export interface Spec extends TurboModule {
     album: string,
     artwork: string
   ): Promise<void>;
-  loadContent(urlString: string): void;
+  loadContent(urlString: string): Promise<void>;
   playAudio(): void;
   pauseAudio(): void;
   stopAudio(): void;

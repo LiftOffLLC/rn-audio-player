@@ -6,15 +6,18 @@ import android.app.PendingIntent
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import androidx.annotation.RequiresApi
 import com.facebook.react.bridge.*
 import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.modules.core.DeviceEventManagerModule
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
 
+@RequiresApi(Build.VERSION_CODES.O)
 @ReactModule(name = AudioModule.NAME)
 class AudioModule(private val reactContext: ReactApplicationContext) :
         NativeAudioModuleSpec(reactContext) {
@@ -29,6 +32,23 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
     private var currentAlbum: String = "Unknown"
     private var currentArtwork: String = ""
 
+    private val playerListener =
+            object : Player.Listener {
+                override fun onPlaybackStateChanged(state: Int) {
+                    when (state) {
+                        Player.STATE_BUFFERING -> emitAudioStateChange("BUFFERING")
+                        Player.STATE_READY -> emitAudioStateChange("LOADED")
+                        Player.STATE_ENDED -> emitAudioStateChange("COMPLETED")
+                        Player.STATE_IDLE -> emitAudioStateChange("IDLE")
+                    }
+                }
+
+                override fun onPlayerError(error: PlaybackException) {
+                    Log.e(TAG, "ExoPlayer Error: ${error.message}")
+                    emitAudioStateChange("ERROR", error.message)
+                }
+            }
+
     init {
         reactContext.runOnUiQueueThread {
             initializeProgressRunnable()
@@ -36,6 +56,7 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannel() {
         val channel =
                 NotificationChannel(CHANNEL_ID, "Audio Player", NotificationManager.IMPORTANCE_LOW)
@@ -48,29 +69,12 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
         if (exoPlayer == null) {
             exoPlayer =
                     ExoPlayer.Builder(reactContext).build().apply {
-                        addListener(
-                                object : Player.Listener {
-                                    override fun onPlaybackStateChanged(state: Int) {
-                                        when (state) {
-                                            Player.STATE_BUFFERING ->
-                                                    emitAudioStateChange("BUFFERING")
-                                            Player.STATE_READY -> emitAudioStateChange("LOADED")
-                                            Player.STATE_ENDED -> emitAudioStateChange("COMPLETED")
-                                        }
-                                    }
-
-                                    override fun onPlayerError(error: PlaybackException) {
-                                        Log.e(TAG, "ExoPlayer Error: ${error.message}")
-                                        emitAudioStateChange("ERROR", error.message)
-                                    }
-                                }
-                        )
+                        addListener(playerListener) // Add the persistent listener here
                     }
         }
     }
 
     @ReactMethod override fun addListener(eventName: String) {}
-
     @ReactMethod override fun removeListeners(count: Double) {}
 
     @ReactMethod
@@ -92,12 +96,10 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
                 currentAlbum = album ?: "Unknown"
                 currentArtwork = artwork ?: ""
 
-                // Update media session metadata
                 try {
                     updateNotification()
                 } catch (e: Exception) {
                     Log.e(TAG, "Error updating notification: ${e.message}")
-                    // Don't fail the whole operation if notification update fails
                 }
 
                 promise.resolve(null)
@@ -113,17 +115,40 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    override fun loadContent(url: String) {
+    override fun loadContent(url: String, promise: Promise) {
         reactContext.runOnUiQueueThread {
             try {
                 if (url.isBlank()) throw IllegalArgumentException("URL cannot be empty")
                 ensurePlayerReady()
+
                 val mediaItem = MediaItem.fromUri(Uri.parse(url))
                 exoPlayer?.setMediaItem(mediaItem)
+
+                val listener =
+                        object : Player.Listener {
+                            override fun onPlaybackStateChanged(state: Int) {
+                                if (state == Player.STATE_READY) {
+                                    promise.resolve(null)
+                                    exoPlayer?.removeListener(this)
+                                } else if (state == Player.STATE_IDLE || state == Player.STATE_ENDED
+                                ) {
+                                    // optional: reject if idle/ended
+                                    promise.reject("LOAD_FAILED", "Failed to load media")
+                                    exoPlayer?.removeListener(this)
+                                }
+                            }
+
+                            override fun onPlayerError(error: PlaybackException) {
+                                promise.reject("LOAD_ERROR", error.message)
+                                exoPlayer?.removeListener(this)
+                            }
+                        }
+
+                exoPlayer?.addListener(listener)
                 exoPlayer?.prepare()
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading audio: ${e.message}")
-                emitAudioStateChange("ERROR", e.message)
+                promise.reject("ERROR", e.message)
             }
         }
     }
@@ -160,15 +185,34 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
     override fun seek(timeInSeconds: Double) {
         reactContext.runOnUiQueueThread {
             exoPlayer?.seekTo((timeInSeconds * 1000).toLong())
-            emitAudioStateChange("SEEKED")
         }
     }
 
     @ReactMethod
     override fun getTotalDuration(promise: Promise) {
         reactContext.runOnUiQueueThread {
-            val duration = exoPlayer?.duration?.toDouble() ?: 0.0
-            promise.resolve(duration / 1000) // Convert to seconds
+            try {
+                if (exoPlayer == null) {
+                    promise.reject("ERROR", "Player not initialized")
+                    return@runOnUiQueueThread
+                }
+
+                if (exoPlayer?.playbackState != Player.STATE_READY) {
+                    promise.reject("ERROR", "Player not ready")
+                    return@runOnUiQueueThread
+                }
+
+                val duration = exoPlayer?.duration
+                if (duration == C.TIME_UNSET) {
+                    promise.reject("ERROR", "Duration not available")
+                    return@runOnUiQueueThread
+                }
+
+                promise.resolve(duration?.toDouble()?.div(1000) ?: 0.0)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error getting duration: ${e.message}")
+                promise.reject("ERROR", "Failed to get duration: ${e.message}")
+            }
         }
     }
 
@@ -214,6 +258,7 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
         reactContext.runOnUiQueueThread {
             progressRunnable?.let { progressHandler?.removeCallbacks(it) }
             progressHandler = null
+            exoPlayer?.removeListener(playerListener) // Remove the listener
             exoPlayer?.release()
             exoPlayer = null
         }
@@ -241,9 +286,7 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
                                     }
                             )
                             .build()
-                            .apply {
-                                setPlayer(exoPlayer)
-                            }
+                            .apply { setPlayer(exoPlayer) }
         } else {
             playerNotificationManager?.setPlayer(exoPlayer)
         }

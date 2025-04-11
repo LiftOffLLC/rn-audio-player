@@ -10,6 +10,7 @@ import {
 } from '@liftoffllc/rn-audio-player';
 import { mockAudioContent } from '../data/mockData.native';
 import Icon from 'react-native-vector-icons/FontAwesome6';
+import { useEffect } from 'react';
 
 const sourceURL =
   'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
@@ -83,8 +84,9 @@ export default function App() {
 }
 
 function PlayerContent() {
-  const { playerState } = usePlayerContext();
-  const { play, pause, loadContent } = usePlayerHook();
+  const { playerState, setCurrentTrack, currentTrack } = usePlayerContext();
+  const player = usePlayerHook()!;
+  const { play, pause, loadContent } = player!;
 
   const MockContent1 = (
     <View style={styles.mockContent}>
@@ -100,9 +102,24 @@ function PlayerContent() {
     </View>
   );
 
-  const handlePlay = () => {
-    loadContent?.();
-    play?.();
+  useEffect(() => {
+    setCurrentTrack(trackInfo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const load = async () => {
+      await loadContent?.();
+    };
+    if (currentTrack) {
+      load();
+    }
+  }, [currentTrack, loadContent]);
+
+  console.log('Player State:', playerState);
+
+  const handlePlay = async () => {
+    await play?.();
   };
 
   return (

@@ -30,8 +30,8 @@ const MiniPlayer = (props: IMiniPlayerProps) => {
     }
   }, [play, state]);
 
-  const handleInit = useCallback(() => {
-    loadContent?.();
+  const handleInit = useCallback(async () => {
+    await loadContent?.();
   }, [loadContent]);
 
   useEffect(() => {

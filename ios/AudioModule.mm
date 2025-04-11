@@ -221,7 +221,9 @@ RCT_EXPORT_MODULE(AudioModule);
   });
 }
 
-- (void)loadContent:(NSString *)urlString {
+- (void)loadContent:(NSString *)urlString
+            resolve:(RCTPromiseResolveBlock)resolve
+             reject:(RCTPromiseRejectBlock)reject {
   // Check if URL is the same as current
   if (self.audioURL &&
       [self.audioURL.absoluteString isEqualToString:urlString]) {
@@ -230,6 +232,7 @@ RCT_EXPORT_MODULE(AudioModule);
     self.isPlaying = NO;
     self.currentDuration = 0;
     [self emitStateChange:@"LOADED" message:@"Content reloaded"];
+    resolve(@(YES));
     return;
   }
   // First cleanup existing player and state
@@ -249,6 +252,7 @@ RCT_EXPORT_MODULE(AudioModule);
 
   // Emit state change
   [self emitStateChange:@"LOADED" message:@"Content loaded successfully"];
+  resolve(@(YES));
 }
 
 - (void)cleanupCurrentPlayback {

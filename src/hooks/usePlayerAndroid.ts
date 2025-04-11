@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { DeviceEventEmitter, NativeModules } from 'react-native';
+import { DeviceEventEmitter, NativeModules, Platform } from 'react-native';
 import { PlayerState, type IHookProps } from '../types';
 import { usePlayerContext } from '../provider';
 
-const { AudioModule } = NativeModules;
+const AudioModule = Platform.select({
+  android: NativeModules.AudioModule,
+  default: null,
+});
 
 const usePlayerAndroid = ({
   onPlay,
@@ -133,7 +136,7 @@ const usePlayerAndroid = ({
       console.error('Error loading audio:', error);
       throw new Error('Error loading audio');
     }
-  }, [currentTrack, getDuration, onReady]);
+  }, [currentTrack?.url, getDuration, onReady]);
 
   const setTrackInfo = useCallback(async () => {
     try {
