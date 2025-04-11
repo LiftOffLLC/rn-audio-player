@@ -1,29 +1,35 @@
-# **`rn-audio-player`** 
+# **`rn-audio-player`**
+
 **rn-audio-player** is a feature-rich package that allows apps to play audio from URL or file. Right now we are supporting IOS and Android. You can find the sample app using this [here](https://github.com/LiftOffLLC/rn-audio-player/tree/main/example)
 
 # **`Why this package`**
-When there are existing solutions like expo-av, react-native-music-player, etc then what makes this package stands-out is 
+
+When there are existing solutions like expo-av, react-native-music-player, etc then what makes this package stands-out is
 
 1. The already integrated UI that comes in form of full-page player and a mini player.
-2. These UI components are fully-customizable and can be modified as per app's design theme. 
+2. These UI components are fully-customizable and can be modified as per app's design theme.
 3. We also support background play, along with media controls
 4. A hook that you can use directly in you app and have your own UI by extending this hook features. 😎
 5. A context that you can use to manage multiple media player sessions.
 
 # **`Installation`**
+
 **Note**- This package is supported for Node version 18 and above.
-To install this package you can do 
+To install this package you can do
+
 ```
 npm install @liftoffllc/rn-audio-player
 ```
-or 
+
+or
+
 ```
 yarn add @liftoffllc/rn-audio-player
 ```
 
 # **`Prerequisites`**
 
-For IOS you have to add these permissions in your app's Info.Plist file 
+For IOS you have to add these permissions in your app's Info.Plist file
 
 ```xml
 <key>NSMicrophoneUsageDescription</key>
@@ -47,6 +53,10 @@ Also if you are going to use Player or Mini-Player then it depends upon **`react
 ```
 
 but if you are going with your own controls then the above step is not needed.
+
+## xcode Configuration
+
+![open xcode project and add ```"AVFoundation" "AVFAudio" "CoreMedia" "MediaPlayer"``` inside "Frameworks, Libraries, and Embedded Content" section.](./docs/screenshots/xcode-config.png)
 
 # **`Usage`**
 
@@ -115,11 +125,11 @@ import { AudioPlayer } from '@liftoffllc/rn-audio-player';
   containerStyle={containerStyle}
   iconStyle={{
     container: iconContainerStyle,
-    icon: iconStyle
+    icon: iconStyle,
   }}
   mediaStyle={{
     container: mediaContainerStyle,
-    thumbnail: thumbnailStyle
+    thumbnail: thumbnailStyle,
   }}
   contentStyle={{
     container: contentContainerStyle,
@@ -127,7 +137,7 @@ import { AudioPlayer } from '@liftoffllc/rn-audio-player';
     title: titleStyle,
     titleText: titleTextStyle,
     artist: artistStyle,
-    artistText: artistTextStyle
+    artistText: artistTextStyle,
   }}
   iconComponents={{
     playIcon: PlayIcon,
@@ -137,7 +147,7 @@ import { AudioPlayer } from '@liftoffllc/rn-audio-player';
     nextIcon: NextIcon,
     previousIcon: PreviousIcon,
     repeatIcon: RepeatIcon,
-    repeatOffIcon: RepeatOffIcon
+    repeatOffIcon: RepeatOffIcon,
   }}
   onPlay={handlePlay}
   onPause={handlePause}
@@ -159,7 +169,7 @@ import { AudioPlayer } from '@liftoffllc/rn-audio-player';
   shouldShowDuration={shouldShowDuration}
   customProgressIndicator={CustomProgressIndicator}
   customControls={CustomControls}
-/>
+/>;
 ```
 
 **MiniPlayer** component
