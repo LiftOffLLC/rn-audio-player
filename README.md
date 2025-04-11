@@ -1,112 +1,147 @@
-# **`rn-audio-player`**
+# `rn-audio-player`
 
-**rn-audio-player** is a feature-rich package that allows apps to play audio from URL or file. Right now we are supporting IOS and Android. You can find the sample app using this [here](https://github.com/LiftOffLLC/rn-audio-player/tree/main/example)
+**`rn-audio-player`** is a feature-rich package that allows apps to play audio from URL or file. Right now we are supporting IOS and Android. You can find the sample app using this [here](https://github.com/LiftOffLLC/rn-audio-player/tree/main/example).
 
-# **`Why this package`**
+---
 
-When there are existing solutions like expo-av, react-native-music-player, etc then what makes this package stands-out is
+## 🚀 Why Use This Package?
 
-1. The already integrated UI that comes in form of full-page player and a mini player.
-2. These UI components are fully-customizable and can be modified as per app's design theme.
-3. We also support background play, along with media controls
-4. A hook that you can use directly in you app and have your own UI by extending this hook features. 😎
-5. A context that you can use to manage multiple media player sessions.
+When there are existing solutions like `expo-av`, `react-native-music-player`, etc., this package stands out due to:
 
-# **`Installation`**
+- **Integrated UI**: Comes with a fully functional full-page player and mini player.
+- **Customizable Components**: UI elements are fully themeable to match your app's design.
+- **Background Playback**: Supports audio playback in the background with media controls.
+- **Powerful Hook**: Use the `usePlayer` hook to build your own custom UI with full control over the player state.
+- **Context API Support**: Manage multiple media sessions effortlessly using our player context.
 
-**Note**- This package is supported for Node version 18 and above.
-To install this package you can do
+---
 
-```
+## 📦 Installation
+
+> **Note:** Requires **Node.js v18+**
+
+```bash
 npm install @liftoffllc/rn-audio-player
-```
-
-or
-
-```
+# or
 yarn add @liftoffllc/rn-audio-player
 ```
 
-# **`Prerequisites`**
+---
 
-For IOS you have to add these permissions in your app's Info.Plist file
+## ⚙️ Prerequisites
+
+### iOS Permissions
+
+Add the following to your **Info.plist**:
 
 ```xml
 <key>NSMicrophoneUsageDescription</key>
 <string>We need access to the microphone for audio playback</string>
 <key>UIBackgroundModes</key>
 <array>
-    <string>audio</string>
-    <string>processing</string>
-    <string>fetch</string>
-    <string>remote-notification</string>
+  <string>audio</string>
+  <string>processing</string>
+  <string>fetch</string>
+  <string>remote-notification</string>
 </array>
 ```
 
-Also if you are going to use Player or Mini-Player then it depends upon **`react-native-vector-icons`** so you have to add below permission.
+If you plan to use the `AudioPlayer` or `MiniPlayer` components, they rely on `react-native-vector-icons`, so you’ll need to install and add the following permission to your `Info.plist` file.
+
+```bash
+npm install react-native-vector-icons
+# or
+yarn add react-native-vector-icons
+```
 
 ```xml
 <key>UIAppFonts</key>
 <array>
-    <string>Ionicons.ttf</string>
+  <string>Ionicons.ttf</string>
 </array>
 ```
 
-but if you are going with your own controls then the above step is not needed.
+---
 
-# **`Xcode Configuration`**
+## 🛠️ Xcode Configuration
 
-Open xcode project and add `"AVFoundation" "AVFAudio" "CoreMedia" "MediaPlayer"` inside "Frameworks, Libraries, and Embedded Content" section.
+- Open your project in Xcode.
+- Go to the `General` tab → **Frameworks, Libraries, and Embedded Content**.
+- Add the following:
 
-![open xcode project and add ```"AVFoundation" "AVFAudio" "CoreMedia" "MediaPlayer"``` inside "Frameworks, Libraries, and Embedded Content" section.](./docs/screenshots/xcode-config.png)
+  - `AVFoundation.framework`
+  - `AVFAudio.framework`
+  - `CoreMedia.framework`
+  - `MediaPlayer.framework`
 
-# **`Usage`**
+![Xcode Configuration](./docs/screenshots/xcode-config.png)
 
-**usePlayer** hook
+---
 
-```javascript
+## 🧩 Props
+
+### AudioPlayer & MiniPlayer Props
+
+| Prop                      | Type                     | Description                                                                                        |
+| ------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------- |
+| `trackInfo`               | `object`                 | **Required**. Metadata like title, artist                                                          |
+| `containerStyle`          | `ViewStyle`              | Style for the outer container.                                                                     |
+| `iconStyle`               | `object`                 | Style for control icons                                                                            |
+| `mediaStyle`              | `object`                 | Style for media section (thumbnail etc.)                                                           |
+| `contentStyle`            | `object`                 | Style for title/artist metadata                                                                    |
+| `iconComponents`          | `object`                 | Custom icon components for controls. ex: `playIcon`, `pauseIcon`, `previousIcon`, `repeatIcon` etc |
+| `sourceUrl`, `filePath`   | `string`                 | URL or file path to the audio                                                                      |
+| `autoPlay`                | `boolean`                | Auto start playback on load                                                                        |
+| `repeat`                  | `boolean`                | Whether to repeat the track                                                                        |
+| `shouldShowControls`      | `boolean`                | Show or hide control buttons                                                                       |
+| `shouldShowMedia`         | `boolean`                | Show or hide media thumbnail                                                                       |
+| `shouldShowContent`       | `boolean`                | Show or hide content (title/artist)                                                                |
+| `shouldShowDuration`      | `boolean`                | Show or hide audio duration                                                                        |
+| `customProgressIndicator` | `ReactNode`              | Custom component to show progress                                                                  |
+| `customControls`          | `ReactNode`              | Custom component to render controls                                                                |
+| `onPlay`                  | `() => void`             | Callback when playback starts.                                                                     |
+| `onPause`                 | `() => void`             | Callback when playback is paused.                                                                  |
+| `onSeek`                  | `(time: number) => void` | Callback when seeking to a specific time.                                                          |
+| `onNext`                  | `() => void`             | Callback when skipping to the next track.                                                          |
+| `onPrevious`              | `() => void`             | Callback when going to the previous track.                                                         |
+| `onSeekForward`           | `() => void`             | Callback when seeking forward.                                                                     |
+| `onSeekBackward`          | `() => void`             | Callback when seeking backward.                                                                    |
+| `onFinished`              | `() => void`             | Callback when track finishes playing.                                                              |
+| `seekInterval`            | `number`                 | Interval (in ms) for to seek. **Default: `3000`**                                                  |
+
+---
+
+## 🧪 Usage
+
+### `usePlayer` Hook
+
+```ts
 import { usePlayer } from '@liftoffllc/rn-audio-player';
 
 const {
-    playerState: {
-        isPlaying,
-        isLoading,
-        totalDuration,
-        progress,
-        elapsedTime
-    },
-    playerControls: {
-        play,
-        pause,
-        stop,
-        seek,
-        seekForward,
-        seekBackward,
-        toggleRepeat
-    },
-    loadContent
+  playerState: { isPlaying, isLoading, totalDuration, progress, elapsedTime },
+  playerControls: { play, pause, stop, seek, seekForward, seekBackward, toggleRepeat },
+  loadContent
 } = usePlayer({
-    onPlay,
-    onFinished,
-    onPause,
-    repeat,
-    onStop,
-    onSeek,
-    onSeekForward,
-    onReady,
-    onSeekBackward,
-    onProgress,
-    sourceUrl,
-    seekInterval = 3, // default is 3 secs
-    autoPlay = false, // default is false
-})
+  onPlay,
+  onFinished,
+  onPause,
+  repeat,
+  onStop,
+  onSeek,
+  onSeekForward,
+  onReady,
+  onSeekBackward,
+  onProgress,
+  sourceUrl,
+  seekInterval // optional
+  autoPlay // optional
+});
 ```
 
-You can use these functions directly in your app to handle player and its state.
+### Context Wrapper
 
-**Note** To use our UI components you have to wrap your application in wrapper which is used to manage multiple instances of audio player.
-
-```javascript
+```tsx
 import { PlayerProvider } from '@liftoffllc/rn-audio-player';
 
 export default function App() {
@@ -118,91 +153,38 @@ export default function App() {
 }
 ```
 
-**AudioPlayer** component
+### `AudioPlayer` Component
 
-```javascript
+```tsx
 import { AudioPlayer } from '@liftoffllc/rn-audio-player';
 
 <AudioPlayer
-  containerStyle={containerStyle}
-  iconStyle={{
-    container: iconContainerStyle,
-    icon: iconStyle,
+  trackInfo={{
+    title: 'John doe Title',
+    artist: 'John doe',
+    album: 'John doe Album',
+    url: 'https://dl.espressif.com/dl/audio/ff-16b-1c-8000hz.mp3',
+    artwork:
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQAu2qz2_GGhotIzQJvsAY-GHK6NRmZzDDWCw&s',
   }}
-  mediaStyle={{
-    container: mediaContainerStyle,
-    thumbnail: thumbnailStyle,
-  }}
-  contentStyle={{
-    container: contentContainerStyle,
-    content: contentStyle,
-    title: titleStyle,
-    titleText: titleTextStyle,
-    artist: artistStyle,
-    artistText: artistTextStyle,
-  }}
-  iconComponents={{
-    playIcon: PlayIcon,
-    pauseIcon: PauseIcon,
-    forwardIcon: ForwardIcon,
-    backwardIcon: BackwardIcon,
-    nextIcon: NextIcon,
-    previousIcon: PreviousIcon,
-    repeatIcon: RepeatIcon,
-    repeatOffIcon: RepeatOffIcon,
-  }}
-  onPlay={handlePlay}
-  onPause={handlePause}
-  onSeek={handleSeek}
-  onNext={handleNext}
-  onPrevious={handlePrevious}
-  onSeekForward={handleSeekForward}
-  onSeekBackward={handleSeekBackward}
-  onFinished={handleFinished}
-  sourceUrl={sourceUrl}
-  trackInfo={trackInfo}
-  autoPlay={autoPlay}
-  filePath={filePath}
-  repeat={repeat}
-  seekInterval={seekInterval}
-  shouldShowControls={shouldShowControls}
-  shouldShowMedia={shouldShowMedia}
-  shouldShowContent={shouldShowContent}
-  shouldShowDuration={shouldShowDuration}
-  customProgressIndicator={CustomProgressIndicator}
-  customControls={CustomControls}
 />;
 ```
 
-**MiniPlayer** component
+### `MiniPlayer` Component
 
-```javascript
+```tsx
 import { MiniPlayer } from '@liftoffllc/rn-audio-player';
 
 <MiniPlayer
-  containerStyles={containerStyles}
-  iconStyle={iconStyle}
-  iconComponents={
-    playIcon={playIcon}
-    pauseIcon={pauseIcon}
-    forwardIcon={forwardIcon}
-    backwardIcon={backwardIcon}
-    nextIcon={nextIcon}
-    previousIcon={previousIcon}
-    repeatIcon={repeatIcon}
-    repeatOffIcon={repeatOffIcon}
-  }
-  autoPlay={autoPlay}
-  repeat={repeat}
-  trackInfo={trackInfo}
-  mediaPlayerIcon={mediaPlayerIcon}
-  playIcon={(...args) => React.ReactNode}
-  pauseIcon={(...args) =>  React.ReactNode}
-  nextIcon={(...args) =>  React.ReactNode}
-  previousIcon={(...args) =>  React.ReactNode}
-  onNext={onNext}
-  onPreivous={onPrevious}
-  onPlay={onPlay}
-  onPause={onPause}
->
+  trackInfo={{
+    title: 'John doe Title',
+    artist: 'John doe',
+    album: 'John doe Album',
+    url: 'https://dl.espressif.com/dl/audio/ff-16b-1c-8000hz.mp3',
+    artwork:
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQAu2qz2_GGhotIzQJvsAY-GHK6NRmZzDDWCw&s',
+  }}
+/>;
 ```
+
+---

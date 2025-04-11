@@ -10,7 +10,7 @@ import { PlayerState } from './types';
 
 export {
   PlayerState,
-  usePlayer as usePlayerHook,
+  usePlayer,
   Player as AudioPlayer,
   MiniPlayerComponent as MiniPlayer,
   PlayerProviderComponent as PlayerProvider,
