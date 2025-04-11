@@ -54,7 +54,9 @@ Also if you are going to use Player or Mini-Player then it depends upon **`react
 
 but if you are going with your own controls then the above step is not needed.
 
-## xcode Configuration
+# **`Xcode Configuration`**
+
+Open xcode project and add `"AVFoundation" "AVFAudio" "CoreMedia" "MediaPlayer"` inside "Frameworks, Libraries, and Embedded Content" section.
 
 ![open xcode project and add ```"AVFoundation" "AVFAudio" "CoreMedia" "MediaPlayer"``` inside "Frameworks, Libraries, and Embedded Content" section.](./docs/screenshots/xcode-config.png)
 
