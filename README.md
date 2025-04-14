@@ -118,24 +118,44 @@ yarn add react-native-vector-icons
 ```ts
 import { usePlayer } from '@liftoffllc/rn-audio-player';
 
-const {
-  playerState: { isPlaying, isLoading, totalDuration, progress, elapsedTime },
-  playerControls: { play, pause, stop, seek, seekForward, seekBackward, toggleRepeat },
-  loadContent
-} = usePlayer({
-  onPlay,
-  onFinished,
-  onPause,
-  repeat,
-  onStop,
-  onSeek,
-  onSeekForward,
-  onReady,
-  onSeekBackward,
-  onProgress,
-  sourceUrl,
-  seekInterval // optional
-  autoPlay // optional
+const { play, pause, stop, seek, toggleRepeat, loadContent } = usePlayer({
+  repeat: false,
+  autoPlay: false,
+  seekInterval: 10,
+  shouldPlayInBackground: true,
+  onPlay: () => {
+    console.log('play');
+  },
+  onPause: () => {
+    console.log('pause');
+  },
+  onSeek: (time: number) => {
+    console.log('seek', time);
+  },
+  onNext: () => {
+    console.log('next');
+  },
+  onPrevious: () => {
+    console.log('previous');
+  },
+  onSeekForward: () => {
+    console.log('seekForward');
+  },
+  onSeekBackward: () => {
+    console.log('seekBackward');
+  },
+  onFinished: () => {
+    console.log('finished');
+  },
+  onStop: () => {
+    console.log('stop');
+  },
+  onReady: () => {
+    console.log('ready');
+  },
+  onProgress: (progress: number) => {
+    console.log('progress', progress);
+  },
 });
 ```
 

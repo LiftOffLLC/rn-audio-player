@@ -6,7 +6,7 @@ import {
   PlayerProvider,
   usePlayerContext,
   PlayerState,
-  usePlayerHook,
+  usePlayer,
 } from '@liftoffllc/rn-audio-player';
 import { mockAudioContent } from '../data/mockData.native';
 import Icon from 'react-native-vector-icons/FontAwesome6';
@@ -85,7 +85,7 @@ export default function App() {
 
 function PlayerContent() {
   const { playerState, setCurrentTrack, currentTrack } = usePlayerContext();
-  const player = usePlayerHook()!;
+  const player = usePlayer()!;
   const { play, pause, loadContent } = player!;
 
   const MockContent1 = (
