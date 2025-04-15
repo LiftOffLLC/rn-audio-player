@@ -207,4 +207,12 @@ import { MiniPlayer } from '@liftoffllc/rn-audio-player';
 />;
 ```
 
+### `Contributing`
+
+For bugs, feature requests, or contributions, please create an issue or submit a pull request.
+
+### `License`
+
+Developed by [LiftOff LLC Engineering](https://www.liftoffllc.com/) 🚀
+
 ---
