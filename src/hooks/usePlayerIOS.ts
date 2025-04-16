@@ -49,8 +49,6 @@ const usePlayerIOS = ({
     if (listenersSetupRef.current) return;
     listenersSetupRef.current = true;
 
-    console.log('Setting up event listeners');
-
     const emitter = audioEventEmitter.current;
 
     const progressEventHandler = emitter.addListener(

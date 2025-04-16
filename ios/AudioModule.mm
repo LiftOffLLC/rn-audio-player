@@ -499,9 +499,6 @@ RCT_EXPORT_MODULE(AudioModule);
     return;
   }
 
-  NSLog(@"Progress: %f, Current Time: %f, Total Duration: %f", progress,
-        currentTime, totalDuration);
-
   // Use a small epsilon for floating point comparison
   const double epsilon = 0.001;
   if (fabs(progress - 1.0) < epsilon) {

@@ -31,15 +31,37 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
     private var currentArtist: String = "Unknown"
     private var currentAlbum: String = "Unknown"
     private var currentArtwork: String = ""
+    private var isPreparing = false
+    private var playbackEnded = false
 
     private val playerListener =
             object : Player.Listener {
                 override fun onPlaybackStateChanged(state: Int) {
                     when (state) {
                         Player.STATE_BUFFERING -> emitAudioStateChange("BUFFERING")
-                        Player.STATE_READY -> emitAudioStateChange("LOADED")
-                        Player.STATE_ENDED -> emitAudioStateChange("COMPLETED")
+                        Player.STATE_READY -> {
+                            if (isPreparing) {
+                                emitAudioStateChange("LOADED")
+                                isPreparing = false
+                            }
+                        }
+                        Player.STATE_ENDED -> {
+                            playbackEnded = true
+                            emitAudioStateChange("COMPLETED")
+                        }
                         Player.STATE_IDLE -> emitAudioStateChange("IDLE")
+                    }
+                }
+                override fun onIsPlayingChanged(isPlaying: Boolean) {
+                    if (playbackEnded) {
+                        // Don't emit PAUSED after completion
+                        playbackEnded = false // reset
+                        return
+                    }
+                    if (isPlaying) {
+                        emitAudioStateChange("PLAYING")
+                    } else {
+                        emitAudioStateChange("PAUSED")
                     }
                 }
 
@@ -145,6 +167,7 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
                         }
 
                 exoPlayer?.addListener(listener)
+                isPreparing = true
                 exoPlayer?.prepare()
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading audio: ${e.message}")
@@ -158,7 +181,6 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
         reactContext.runOnUiQueueThread {
             ensurePlayerReady()
             exoPlayer?.playWhenReady = true
-            emitAudioStateChange("PLAYING")
             progressRunnable?.let { progressHandler?.post(it) }
         }
     }
@@ -167,7 +189,6 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
     override fun pauseAudio() {
         reactContext.runOnUiQueueThread {
             exoPlayer?.playWhenReady = false
-            emitAudioStateChange("PAUSED")
             progressRunnable?.let { progressHandler?.removeCallbacks(it) }
         }
     }
@@ -184,7 +205,21 @@ class AudioModule(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     override fun seek(timeInSeconds: Double) {
         reactContext.runOnUiQueueThread {
-            exoPlayer?.seekTo((timeInSeconds * 1000).toLong())
+            try {
+                // Store current playing state
+                val wasPlaying = exoPlayer?.isPlaying ?: false
+                exoPlayer?.seekTo((timeInSeconds * 1000).toLong())
+
+                // Don't emit LOADED state on seek
+                if (wasPlaying) {
+                    emitAudioStateChange("PLAYING")
+                } else {
+                    emitAudioStateChange("PAUSED")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error seeking: ${e.message}")
+                emitAudioStateChange("ERROR", "Failed to seek: ${e.message}")
+            }
         }
     }
 
